@@ -8,7 +8,7 @@ endif
 CC=gcc
 CXX=g++
 STD=gnu99
-CFLAGS=-fPIC -I /usr/local/include -Wall -I ./include
+CFLAGS=-fPIC -I /usr/local/include -Wall
 CXXFLAGS=-fPIC -I /usr/local/include -Wall
 ifeq ($(DEBUG),1)
 CFLAGS +=-g -O0
