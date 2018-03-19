@@ -275,7 +275,7 @@ DB_misc_t plugin = {
     .plugin.id = "discord_presence",
     .plugin.name ="Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
-                    "It connects with Discord through Discord Rich Prensence API, no further authentication is needed.\n"
+                    "It connects with Discord through Discord Rich Presence API, no further authentication is needed.\n"
                     "You can configure displayed information through plugin settings.\n"
                     "For more information about title formatting please visit:\n"
                     "https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0",
