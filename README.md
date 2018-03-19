@@ -18,4 +18,4 @@ This repo includes that precompiled library for x86_64.
 If you'd like to compile libdirscord-rpc self, you will need to compile it as reallocable with `-fPIC` option.
 You can find libdiscord-rpc library [here](https://github.com/discordapp/discord-rpc). After compiling libdiscord-rpc you can copy `libdiscord-rpc.a` and `discord_rpc.h` into that repo.
 
-To compile discord_presence plugin simply do `make` and `sudo make install`.
+To compile discord_presence plugin simply do `make` and `sudo make install`. For debug build, compile with `make DEBUG=1`.
