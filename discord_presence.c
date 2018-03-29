@@ -70,13 +70,13 @@ static char * nowplaying_format_string (char * script) {
     char * out = malloc(MAX_LEN);
     if (out && code_script) {
         deadbeef->tf_eval (&context, code_script, out, MAX_LEN);
+        trace ("nowplaying_format_string: \"%s\"\n",out);
         deadbeef->tf_free (code_script);
     }
     deadbeef->pl_item_unref (nowplaying);
     if (nowplaying_plt){
         deadbeef->plt_unref (nowplaying_plt);
     }
-    trace ("nowplaying_format_string: \"%s\"\n",out);
     return out;
 }
 
@@ -184,9 +184,12 @@ static void updateDiscordPresence(int playback_status, float song_len) {
 
     Discord_UpdatePresence(&discordPresence);
 
-    free (title_text);
-    free (state_text);
-    free (icon_text);
+    if (title_text)
+        free (title_text);
+    if (state_text)
+        free (state_text);
+    if (icon_text)
+        free (icon_text);
 }
 
 static int
