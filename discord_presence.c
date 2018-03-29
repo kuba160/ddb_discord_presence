@@ -28,7 +28,8 @@
 
 DB_misc_t plugin;
 //#define trace(...) { deadbeef->log ( __VA_ARGS__); }
-#define trace(...) { deadbeef->log_detailed (&plugin.plugin, 0, __VA_ARGS__); }
+#define trace(...) { ; }
+//#define trace(...) { deadbeef->log_detailed (&plugin.plugin, 0, __VA_ARGS__); }
 #define trace_err(...) { deadbeef->log ( __VA_ARGS__); }
 
 #define APPLICATION_ID "424928021309554698"
@@ -66,7 +67,7 @@ static char * nowplaying_format_string (char * script) {
     context.id = 0;
     context.iter = PL_MAIN;
     context.update = 0;
-    context.dimmed = 0;
+    //context.dimmed = 0;
     char * out = malloc(MAX_LEN);
     if (out && code_script) {
         deadbeef->tf_eval (&context, code_script, out, MAX_LEN);
@@ -271,7 +272,7 @@ static const char settings_dlg[] =
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
-    .plugin.api_vminor = 10,
+    .plugin.api_vminor = 9,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 0,
     .plugin.version_minor = 9,
