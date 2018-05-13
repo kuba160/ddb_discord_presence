@@ -176,7 +176,11 @@ static void updateDiscordPresence(int playback_status, float song_len) {
 
     // misc
     discordPresence.largeImageKey = "default";
-    //discordPresence.smallImageKey = 0;
+    discordPresence.smallImageKey = 0;
+    if (playback_status == STATUS_PAUSED) {
+        if (deadbeef->conf_get_int("discord_presence.paused_icon", 1))
+            discordPresence.smallImageKey = "paused_circle";
+    }
     //discordPresence.partyId = 0;
     //discordPresence.matchSecret = 0;
     //discordPresence.joinSecret = 0;
@@ -267,14 +271,15 @@ static const char settings_dlg[] =
     "property \"Overwrite state format with playlist name\" checkbox discord_presence.playlist_on_state 0;\n"
     "property \"Display track number/total track count \" checkbox discord_presence.show_tracknum 1;\n"
     "property \"Switch time elapsed to remaining time\" checkbox discord_presence.end_timestamp 0;\n"
-    "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n";
+    "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
+    "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n";
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
-    .plugin.version_major = 0,
-    .plugin.version_minor = 9,
+    .plugin.version_major = 1,
+    .plugin.version_minor = 0,
     .plugin.id = "discord_presence",
     .plugin.name ="Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
