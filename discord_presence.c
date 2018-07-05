@@ -27,58 +27,17 @@
 #include "discord_rpc.h"
 
 DB_misc_t plugin;
-//#define trace(...) { deadbeef->log ( __VA_ARGS__); }
-#define trace(...) { deadbeef->log_detailed (&plugin.plugin, 0, __VA_ARGS__); }
+#define trace(...) { deadbeef->log ( __VA_ARGS__); }
+//#define trace(...) { deadbeef->log_detailed (&plugin.plugin, 0, __VA_ARGS__); }
 #define trace_err(...) { deadbeef->log ( __VA_ARGS__); }
 
 #define APPLICATION_ID "424928021309554698"
+#define ASSET_ICON "default"
+#define ASSET_ICON_PAUSED "paused_circle"
 #define MAX_LEN 256
 
 DB_functions_t *deadbeef;
 char discord_enabled = 0;
-
-static void discordInit() {
-    DiscordEventHandlers handlers;
-    memset(&handlers, 0, sizeof(handlers));
-    // handlers are not used in our case
-    //handlers.ready = handleDiscordReady;
-    //handlers.disconnected = handleDiscordDisconnected;
-    //handlers.errored = handleDiscordError;
-    //handlers.joinGame = handleDiscordJoin;
-    //handlers.spectateGame = handleDiscordSpectate;
-    //handlers.joinRequest = handleDiscordJoinRequest;
-    Discord_Initialize(APPLICATION_ID, &handlers, 1, NULL);
-}
-
-static char * nowplaying_format_string (char * script) {
-    DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
-    if (!nowplaying) {
-        return 0;
-    }
-    ddb_playlist_t * nowplaying_plt = deadbeef->plt_get_curr ();
-    char * code_script = deadbeef->tf_compile (script);
-    ddb_tf_context_t context;
-    context._size = sizeof(ddb_tf_context_t);
-    context.flags = 0;
-    context.it = nowplaying;
-    context.plt = nowplaying_plt;
-    context.idx = 0;
-    context.id = 0;
-    context.iter = PL_MAIN;
-    context.update = 0;
-    context.dimmed = 0;
-    char * out = malloc(MAX_LEN);
-    if (out && code_script) {
-        deadbeef->tf_eval (&context, code_script, out, MAX_LEN);
-        trace ("nowplaying_format_string: \"%s\"\n",out);
-        deadbeef->tf_free (code_script);
-    }
-    deadbeef->pl_item_unref (nowplaying);
-    if (nowplaying_plt){
-        deadbeef->plt_unref (nowplaying_plt);
-    }
-    return out;
-}
 
 static float nowplaying_length (){
     DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
@@ -90,6 +49,62 @@ static float nowplaying_length (){
     return 0.0;
 }
 
+#define S_TITLE 0
+#define S_STATE 1
+#define S_ICON 2
+
+struct rp_info {
+    ddb_tf_context_t context;
+    char script[3][MAX_LEN];
+    char *code[3];
+    DiscordRichPresence discordPresence;
+};
+struct rp_info curr;
+
+static char * curr_eval (int num) {
+    char * out = malloc(MAX_LEN);
+    if (out && curr.code[num]) {
+        deadbeef->tf_eval (&(curr.context), curr.code[num], out, MAX_LEN);
+        trace ("curr_eval[%d]: \"%s\"\n",num, out);
+    }
+    return out;
+}
+
+static void curr_context_update () {
+   DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
+    ddb_playlist_t * nowplaying_plt = deadbeef->plt_get_curr ();
+    curr.context._size = sizeof(ddb_tf_context_t);
+    curr.context.flags = 0;
+    curr.context.it = nowplaying;
+    curr.context.plt = nowplaying_plt;
+    curr.context.idx = 0;
+    curr.context.id = 0;
+    curr.context.iter = PL_MAIN;
+    curr.context.update = 0;
+    curr.context.dimmed = 0;
+}
+
+static void curr_context_free () {
+    if (curr.context.it)
+    deadbeef->pl_item_unref (curr.context.it);
+    if (curr.context.plt){
+        deadbeef->plt_unref (curr.context.plt);
+    }
+}
+
+static void curr_tfcode_new (int num, char *newscript) {
+    if (curr.code[num]) {
+        deadbeef->tf_free (curr.code[num]);
+        curr.code[num] = 0;
+    }
+    strncpy (curr.script[num], newscript, MAX_LEN);
+    curr.code[num] = deadbeef->tf_compile (curr.script[num]);
+    if (!curr.code[num]) {
+        trace_err ("failed to compile tf script\n");
+    }
+}
+
+#define STATUS_UNPAUSED 0
 #define STATUS_PAUSED 1
 #define STATUS_SONGCHANGED 2
 #define STATUS_SEEKED 3
@@ -99,20 +114,20 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // Arguments:
     //     playback_status: as above
     //     song_len: set only if playback_status=STATUS_SONGCHANGED
-
-    DiscordRichPresence discordPresence;
-    memset (&discordPresence, 0, sizeof(discordPresence));
+    // TODO (?): all strings are generated every time, it may be unnecessary if seeked
+    curr_context_update ();
 
     char script[MAX_LEN];
-    
     // title_text
-    char * title_text;
     deadbeef->conf_get_str ("discord_presence.title_script", "%title% $if(%ispaused%,'('paused')')", script, MAX_LEN);
-    title_text = nowplaying_format_string (script);
-    discordPresence.details = title_text;
+    if (strcmp(curr.script[S_TITLE], script) != 0) {
+        curr_tfcode_new(S_TITLE, script);
+    }
+    char * title_text = curr_eval (S_TITLE);
+    curr.discordPresence.details = title_text;
     
     // state_text
-    char * state_text;
+    char * state_text = 0;
     if (deadbeef->conf_get_int ("discord_presence.playlist_on_state", 0)) {
         state_text = malloc (MAX_LEN);
         if (state_text) {
@@ -125,15 +140,21 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     }
     else {
         deadbeef->conf_get_str ("discord_presence.state_script", "%artist%", script, MAX_LEN);
-        state_text = nowplaying_format_string (script);
+        if (strcmp(curr.script[S_STATE], script) != 0) {
+            curr_tfcode_new(S_STATE, script);
+        }
+        state_text = curr_eval (S_STATE);
     }
-    discordPresence.state = state_text;
+    curr.discordPresence.state = state_text;
 
     // icon_text
     char * icon_text;
     deadbeef->conf_get_str ("discord_presence.icon_script", "%artist% \'/\' %album%", script, MAX_LEN);
-    icon_text = nowplaying_format_string (script);
-    discordPresence.largeImageText = icon_text;
+    if (strcmp(curr.script[S_ICON], script) != 0) {
+        curr_tfcode_new(S_ICON, script);
+    }
+    icon_text = curr_eval (S_ICON);
+    curr.discordPresence.largeImageText = icon_text;
 
     // tracknum
     int nowplaying_num = 0;
@@ -151,42 +172,39 @@ static void updateDiscordPresence(int playback_status, float song_len) {
             deadbeef->plt_unref (nowplaying_plt);
         }
     }
-    discordPresence.partySize = nowplaying_num;
-    discordPresence.partyMax = nowplaying_all;
+    curr.discordPresence.partySize = nowplaying_num;
+    curr.discordPresence.partyMax = nowplaying_all;
     
     // time played
-    discordPresence.startTimestamp = 0;
-    discordPresence.endTimestamp = 0;
+    curr.discordPresence.startTimestamp = 0;
+    curr.discordPresence.endTimestamp = 0;
     if (playback_status != STATUS_PAUSED) {
         // startTimestamp
-        discordPresence.startTimestamp = time(0);
+        curr.discordPresence.startTimestamp = time(0);
         if (playback_status != STATUS_SONGCHANGED) {
-            discordPresence.startTimestamp -= (int) (nowplaying_length() * deadbeef->playback_get_pos() / 100);
+            curr.discordPresence.startTimestamp -= (int) (nowplaying_length() * deadbeef->playback_get_pos() / 100);
         }
 
         // endTimestamp (calculate if needed)
         if (deadbeef->conf_get_int ("discord_presence.end_timestamp", 0)) {
-            discordPresence.instance = 1;
+            curr.discordPresence.instance = 1;
             if (playback_status == STATUS_SONGCHANGED)
-                discordPresence.endTimestamp = discordPresence.startTimestamp + (int) song_len;
+                curr.discordPresence.endTimestamp = curr.discordPresence.startTimestamp + (int) song_len;
             else
-                discordPresence.endTimestamp = discordPresence.startTimestamp + (int) nowplaying_length();
+                curr.discordPresence.endTimestamp = curr.discordPresence.startTimestamp + (int) nowplaying_length();
         }
     }
 
-    // misc
-    discordPresence.largeImageKey = "default";
-    discordPresence.smallImageKey = 0;
+    // paused icon
     if (playback_status == STATUS_PAUSED) {
         if (deadbeef->conf_get_int("discord_presence.paused_icon", 1))
-            discordPresence.smallImageKey = "paused_circle";
+            curr.discordPresence.smallImageKey = ASSET_ICON_PAUSED;
     }
-    //discordPresence.partyId = 0;
-    //discordPresence.matchSecret = 0;
-    //discordPresence.joinSecret = 0;
-    //discordPresence.spectateSecret = 0;
+    else if (playback_status == STATUS_UNPAUSED) {
+        curr.discordPresence.smallImageKey = 0;
+    }
 
-    Discord_UpdatePresence(&discordPresence);
+    Discord_UpdatePresence(&curr.discordPresence);
 
     if (title_text)
         free (title_text);
@@ -194,6 +212,27 @@ static void updateDiscordPresence(int playback_status, float song_len) {
         free (state_text);
     if (icon_text)
         free (icon_text);
+
+    curr_context_free ();
+}
+
+static void discordInit() {
+    DiscordEventHandlers handlers;
+    memset(&handlers, 0, sizeof(handlers));
+    // handlers are not used in our case
+    //handlers.ready = handleDiscordReady;
+    //handlers.disconnected = handleDiscordDisconnected;
+    //handlers.errored = handleDiscordError;
+    //handlers.joinGame = handleDiscordJoin;
+    //handlers.spectateGame = handleDiscordSpectate;
+    //handlers.joinRequest = handleDiscordJoinRequest;
+    Discord_Initialize(APPLICATION_ID, &handlers, 1, NULL);
+    curr.discordPresence.largeImageKey = ASSET_ICON;
+    curr.discordPresence.smallImageKey = 0;
+    //discordPresence.partyId = 0;
+    //discordPresence.matchSecret = 0;
+    //discordPresence.joinSecret = 0;
+    //discordPresence.spectateSecret = 0;
 }
 
 static int
