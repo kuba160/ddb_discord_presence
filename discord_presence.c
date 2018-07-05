@@ -219,10 +219,11 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
                 // do not update if track changed to NULL
                 if(((ddb_event_trackchange_t *)ctx)->to != 0) {
                     // DB_EV_SONGCHANGED is emited twice (bug? ignoring the first one)
-                    if ( ((ddb_event_trackchange_t *)ctx)->to != ((ddb_event_trackchange_t *)ctx)->from) {
+                    // this has been fixed in commit d63a53bf70f09bc8534f6394580221c0af1babeb (2018-05-23)
+                    //if ( ((ddb_event_trackchange_t *)ctx)->to != ((ddb_event_trackchange_t *)ctx)->from) {
                         float nextitem_length = deadbeef->pl_get_item_duration (((ddb_event_trackchange_t *)ctx)->to);
                         updateDiscordPresence(STATUS_SONGCHANGED, nextitem_length);
-                    }
+                    //}
                 }
             }
             break;
