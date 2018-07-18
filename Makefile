@@ -19,12 +19,16 @@ PREFIX=/usr/local/lib/deadbeef
 PLUGNAME=discord_presence
 LIBS=discord-rpc/src/libdiscord-rpc.a -lpthread
 
-all: libdiscord-rpc.a
+all: submodules_load libdiscord-rpc.a
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
 	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS)
 
 libdiscord-rpc.a: discord-rpc-patch
 	cd discord-rpc/ && cmake . && make
+
+submodules_load:
+	git submodule init
+	git submodule update
 
 discord-rpc-patch:
 	@cd discord-rpc; \
