@@ -308,8 +308,8 @@ DB_misc_t plugin = {
         "2. Altered source versions must be plainly marked as such, and must not be\n"
         " misrepresented as being the original software.\n"
         "\n"
-        "3. This notice may not be removed or altered from any source distribution.\n"
-    ,
+        "3. This notice may not be removed or altered from any source distribution.\n",
+    .plugin.website = "http://github.com/kuba160/ddb_discord_presence",
     .plugin.message = discord_presence_message,
     .plugin.start = discord_presence_start,
     .plugin.stop = discord_presence_stop,
