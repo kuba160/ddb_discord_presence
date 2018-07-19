@@ -1,16 +1,36 @@
-diff --git a/src/CMakeLists.txt b/src/CMakeLists.txt
-index f9ec250..b30a804 100644
---- a/src/CMakeLists.txt
-+++ b/src/CMakeLists.txt
-@@ -1,9 +1,11 @@
- include_directories(${PROJECT_SOURCE_DIR}/include)
-+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
- 
- option(ENABLE_IO_THREAD "Start up a separate I/O thread, otherwise I'd need to call an update function" ON)
- option(USE_STATIC_CRT "Use /MT[d] for dynamic library" OFF)
- option(WARNINGS_AS_ERRORS "When enabled, compiles with `-Werror` (on *nix platforms)." OFF)
- 
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..24a586d
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,30 @@
++SRC_DIR := ./src
++SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
++ifeq ($(OS),Windows_NT)
++    SRC_FILES := $(filter-out $(SRC_DIR)/connection_unix.cpp $(SRC_DIR)/discord_register_linux.cpp, $(SRC_FILES))
++else
++    SRC_FILES := $(filter-out $(SRC_DIR)/connection_win.cpp $(SRC_DIR)/discord_register_win.cpp $(SRC_DIR)/dllmain.cpp, $(SRC_FILES))
++endif
 +
- set(CMAKE_CXX_STANDARD 14)
- 
- set(BASE_RPC_SRC
++OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(SRC_DIR)/%.o,$(SRC_FILES))
++CXXFLAGS := -I thirdparty/rapidjson-1.1.0/include/ -I include/ -DDISCORD_LINUX -std=gnu++14 -fPIC
++LIBS := -lpthread
++RAPIDJSON = thirdparty/rapidjson-1.1.0
++
++all: $(RAPIDJSON) libdiscord-rpc.a
++
++libdiscord-rpc.a: $(OBJ_FILES)
++	ar rcs src/$@ $^
++
++$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
++	g++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
++
++clean:
++	rm -f $(SRC_DIR)/*.o
++	rm -f $(SRC_DIR)/*.a
++
++$(RAPIDJSON):
++	echo "Downloading rapidjson"
++	wget -N -P thirdparty/ https://github.com/miloyip/rapidjson/archive/v1.1.0.tar.gz
++	tar xzf thirdparty/v1.1.0.tar.gz -C thirdparty/
++	rm thirdparty/v1.1.0.tar.gz

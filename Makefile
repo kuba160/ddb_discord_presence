@@ -26,7 +26,7 @@ discord_presence:
 	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS)
 
 libdiscord-rpc.a: discord-rpc-patch
-	cd discord-rpc/ && cmake . && make
+	cd discord-rpc && $(MAKE)
 
 submodules_load:
 	git submodule init
