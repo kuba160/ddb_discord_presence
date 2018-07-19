@@ -19,7 +19,9 @@ PREFIX=/usr/local/lib/deadbeef
 PLUGNAME=discord_presence
 LIBS=discord-rpc/src/libdiscord-rpc.a -lpthread
 
-all: submodules_load libdiscord-rpc.a
+all: submodules_load libdiscord-rpc.a discord_presence
+
+discord_presence:
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
 	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS)
 
