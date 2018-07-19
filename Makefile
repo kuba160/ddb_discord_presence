@@ -8,8 +8,8 @@ endif
 CC=gcc
 CXX=g++
 STD=gnu99
-CFLAGS=-fPIC -I /usr/local/include -I discord-rpc/include -Wall
-CXXFLAGS=-fPIC -I /usr/local/include -Wall
+CFLAGS+=-fPIC -I /usr/local/include -I discord-rpc/include -Wall
+CXXFLAGS+=-fPIC -I /usr/local/include -Wall
 ifeq ($(DEBUG),1)
 CFLAGS +=-g -O0
 CXXFLAGS +=-g -O0
@@ -23,7 +23,7 @@ all: submodules_load libdiscord-rpc.a discord_presence
 
 discord_presence:
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
-	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS)
+	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS) $(LDFLAGS)
 
 libdiscord-rpc.a: discord-rpc-patch
 	cd discord-rpc && $(MAKE)
