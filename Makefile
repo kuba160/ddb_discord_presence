@@ -17,7 +17,7 @@ endif
 
 PREFIX=/usr/local/lib/deadbeef
 PLUGNAME=discord_presence
-LIBS=discord-rpc/src/libdiscord-rpc.a -lpthread
+LIBS=libdiscord-rpc.a -lpthread
 
 all: submodules_load libdiscord-rpc.a discord_presence
 
@@ -27,6 +27,7 @@ discord_presence:
 
 libdiscord-rpc.a: discord-rpc-patch
 	cd discord-rpc && $(MAKE)
+	cp discord-rpc/src/libdiscord-rpc.a .
 
 submodules_load:
 	git submodule init
