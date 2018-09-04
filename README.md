@@ -3,6 +3,11 @@ Discord Rich Presence Plugin shows your current playing track on your Discord st
 
 ![image](https://user-images.githubusercontent.com/6359901/37570313-94e681fa-2aee-11e8-8b65-cd786c999a0f.png)
 
+## Download
+You can find my local builds on https://github.com/kuba160/ddb_discord_presence/releases
+
+Another alternative is to download it from http://deadbeef.sourceforge.net/plugins.html (0.7 branch)
+
 ## Configuration
 Plugin connects with Discord through Discord Rich Presence API, no further authentication is needed.
 You can configure displayed information through plugin settings:
@@ -10,6 +15,7 @@ You can configure displayed information through plugin settings:
 ![image](https://user-images.githubusercontent.com/6359901/37570322-c8a79236-2aee-11e8-875f-ba317ded6b25.png)
 
 For more information about title formatting please visit [https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0](https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0)
+
 
 ## Compile
 To compile that plugin you will need `libdiscord-rpc` static library (`libdiscord-rpc.a`).
