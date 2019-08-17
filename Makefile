@@ -2,7 +2,13 @@
 ifeq ($(OS),Windows_NT)
     SUFFIX = dll
 else
-    SUFFIX = so
+    UNAME_S := $(shell uname -s)
+    ifeq ($(UNAME_S),Darwin)
+        SUFFIX = dylib
+        DEADBEEF_OSX = /Applications/DeaDBeeF.app
+    else
+        SUFFIX = so
+    endif
 endif
 
 CC=gcc
@@ -10,12 +16,19 @@ CXX=g++
 STD=gnu99
 CFLAGS+=-fPIC -I /usr/local/include -I discord-rpc/include -Wall
 CXXFLAGS+=-fPIC -I /usr/local/include -Wall
+ifeq ($(UNAME_S),Darwin)
+    CFLAGS+=-I $(DEADBEEF_OSX)/Contents/Headers
+    CXXFLAGS+=-I $(DEADBEEF_OSX)/Contents/Headers
+endif
 ifeq ($(DEBUG),1)
 CFLAGS +=-g -O0
 CXXFLAGS +=-g -O0
 endif
 
 PREFIX=/usr/local/lib/deadbeef
+ifeq ($(UNAME_S),Darwin)
+    PREFIX=$(DEADBEEF_OSX)/Contents/Resources
+endif
 PLUGNAME=discord_presence
 LIBS=libdiscord-rpc.a -lpthread
 
