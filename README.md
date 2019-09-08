@@ -1,7 +1,7 @@
 # Discord RP plugin for DeaDBeeF 
 Discord Rich Presence Plugin shows your current playing track on your Discord status.
 
-![image](https://user-images.githubusercontent.com/6359901/37570313-94e681fa-2aee-11e8-8b65-cd786c999a0f.png)
+![image](https://user-images.githubusercontent.com/6359901/64494663-11f67980-d290-11e9-8b88-8c0f6d011dca.png)
 
 ## Download
 You can find my local builds on https://github.com/kuba160/ddb_discord_presence/releases
