@@ -1,0 +1,27 @@
+name: DeaDBeeF plugin action build
+
+on: [push]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v1
+    - name: DeaDBeeF header download
+      run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+    - name: make
+      run: make && mkdir binary && make install PREFIX=./binary
+    - name: make (debug)
+      run: make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
+    - uses: actions/upload-artifact@v1
+      with:
+        name: x86_64-binary-${{ github.sha }}
+        path: ./binary
+    - uses: actions/upload-artifact@v1
+      with:
+        name: DEBUG-x86_64-binary-${{ github.sha }}
+        path: ./binary_debug
+
+
