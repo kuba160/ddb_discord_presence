@@ -9,8 +9,8 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: Package download
-      run: sudo apt-get --assume-yes install libmpg123-dev zip gzip tar
+    - name: DeaDBeeF header download
+      run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
     - name: make
       run: make && mkdir binary && make install PREFIX=./binary
     - name: make (debug)
