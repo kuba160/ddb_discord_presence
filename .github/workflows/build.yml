@@ -10,15 +10,15 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v1
+    - name: Get sha_short
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
     - name: Download DeaDBeeF header
       run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
     - name: Build ddb_discord_presence
       run: make && mkdir binary && make install PREFIX=./binary
     - name: Build ddb_discord_presence with debugging symbols
       run: make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
-    - name: Get sha_short
-      id: vars
-      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
     - name: Upload artifact linux-${{ steps.vars.outputs.sha_short }}.zip
       uses: actions/upload-artifact@v1
       with:
@@ -34,24 +34,24 @@ jobs:
     name: Windows
     runs-on: windows-latest
     steps:
-     -  name: Install msys2
-        uses: numworks/setup-msys2@v1
-     -  name: Synchronize package databases
-        run: msys2do pacman -Syy --noconfirm
-     -  name: Install mingw-w64-x86_64-gcc wget make git tar
-        run: msys2do pacman -S --noconfirm mingw-w64-x86_64-gcc wget make git tar
-
      - name: Checkout repository
        uses: actions/checkout@v1
+     - name: Get sha_short
+       id: vars
+       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+     - name: Install msys2
+       uses: numworks/setup-msys2@v1
+     - name: Synchronize package databases
+       run: msys2do pacman -Syy --noconfirm
+     - name: Install mingw-w64-x86_64-gcc wget make git tar
+       run: msys2do pacman -S --noconfirm mingw-w64-x86_64-gcc wget make git tar
+
      - name: Download DeaDBeeF header
        run: msys2do wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
      - name: Build ddb_discord_presence
        run: msys2do make && mkdir binary && make install PREFIX=./binary
      - name: Build ddb_discord_presence with debugging symbols
        run: msys2do make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
-     - name: Get sha_short
-       id: vars
-       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
      - name: Upload artifact windows-${{ steps.vars.outputs.sha_short }}.zip
        uses: actions/upload-artifact@v1
        with:
