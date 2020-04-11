@@ -1,4 +1,4 @@
-name: DeaDBeeF plugin action build
+name: ddb_portaudio plugin build
 
 on: [push]
 
@@ -9,20 +9,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v1
-    - name: DeaDBeeF header download
+    - name: Download DeaDBeeF header
       run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
-    - name: make
+    - name: Build ddb_portaudio
       run: make && mkdir binary && make install PREFIX=./binary
-    - name: make (debug)
+    - name: Build ddb_portaudio with debugging symbols
       run: make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
-    - name: Set outputs
+    - name: Get sha_short
       id: vars
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
-    - uses: actions/upload-artifact@v1
+    - name: Upload artifact linux-${{ steps.vars.outputs.sha_short }}.zip
+      uses: actions/upload-artifact@v1
       with:
         name: linux-${{ steps.vars.outputs.sha_short }}
         path: ./binary
-    - uses: actions/upload-artifact@v1
+    - name: Upload artifact linux-debug-${{ steps.vars.outputs.sha_short }}.zip
+      uses: actions/upload-artifact@v1
       with:
         name: linux-debug-${{ steps.vars.outputs.sha_short }}
         path: ./binary_debug
