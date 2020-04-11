@@ -3,8 +3,8 @@ name: DeaDBeeF plugin action build
 on: [push]
 
 jobs:
-  build:
-
+  build_linux:
+    name: Linux
     runs-on: ubuntu-latest
 
     steps:
@@ -23,5 +23,29 @@ jobs:
       with:
         name: DEBUG-x86_64-binary-${{ github.sha }}
         path: ./binary_debug
+
+  build_windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+     -  uses: numworks/setup-msys2@v1
+     -  run: msys2do pacman -Syy --noconfirm
+     -  run: msys2do pacman -S --noconfirm mingw-w64-x86_64-gcc wget make git tar
+
+     - uses: actions/checkout@v1
+     - name: DeaDBeeF header download
+       run: msys2do wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+     - name: make
+       run: msys2do make && mkdir binary && make install PREFIX=./binary
+     - name: make (debug)
+       run: msys2do make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
+     - uses: actions/upload-artifact@v1
+       with:
+         name: x86_64-binary-${{ github.sha }}
+         path: ./binary
+     - uses: actions/upload-artifact@v1
+       with:
+         name: DEBUG-x86_64-binary-${{ github.sha }}
+         path: ./binary_debug
 
 
