@@ -1,0 +1,65 @@
+name: ddb_discord_presence plugin build
+
+on: [push]
+
+jobs:
+  build_linux:
+    name: Linux
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Get sha_short
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: Download DeaDBeeF header
+      run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+    - name: Build ddb_discord_presence
+      run: make && mkdir binary && make install PREFIX=./binary
+    - name: Build ddb_discord_presence with debugging symbols
+      run: make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
+    - name: Upload artifact linux-${{ steps.vars.outputs.sha_short }}.zip
+      uses: actions/upload-artifact@v1
+      with:
+        name: linux-${{ steps.vars.outputs.sha_short }}
+        path: ./binary
+    - name: Upload artifact linux-debug-${{ steps.vars.outputs.sha_short }}.zip
+      uses: actions/upload-artifact@v1
+      with:
+        name: linux-debug-${{ steps.vars.outputs.sha_short }}
+        path: ./binary_debug
+
+  build_windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+     - name: Checkout repository
+       uses: actions/checkout@v1
+     - name: Get sha_short
+       id: vars
+       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+     - name: Install msys2
+       uses: numworks/setup-msys2@v1
+     - name: Synchronize package databases
+       run: msys2do pacman -Syy --noconfirm
+     - name: Install mingw-w64-x86_64-gcc wget make git tar
+       run: msys2do pacman -S --noconfirm mingw-w64-x86_64-gcc wget make git tar
+
+     - name: Download DeaDBeeF header
+       run: msys2do wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+     - name: Build ddb_discord_presence
+       run: msys2do make && mkdir binary && make install PREFIX=./binary
+     - name: Build ddb_discord_presence with debugging symbols
+       run: msys2do make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
+     - name: Upload artifact windows-${{ steps.vars.outputs.sha_short }}.zip
+       uses: actions/upload-artifact@v1
+       with:
+         name: windows-${{ steps.vars.outputs.sha_short }}
+         path: ./binary
+     - name: Upload artifact windows-debug-${{ steps.vars.outputs.sha_short }}.zip
+       uses: actions/upload-artifact@v1
+       with:
+         name: windows-debug-${{ steps.vars.outputs.sha_short }}
+         path: ./binary_debug
+
