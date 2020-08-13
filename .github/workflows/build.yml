@@ -41,8 +41,8 @@ jobs:
        run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
      - name: Install msys2
        uses: numworks/setup-msys2@v1
-     - name: Synchronize package databases
-       run: msys2do pacman -Syy --noconfirm
+#     - name: Synchronize package databases
+#       run: msys2do pacman -Syy --noconfirm
      - name: Install mingw-w64-x86_64-gcc wget make git tar
        run: msys2do pacman -S --noconfirm mingw-w64-x86_64-gcc wget make git tar
 
