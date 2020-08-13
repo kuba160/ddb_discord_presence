@@ -1,13 +1,13 @@
 # Makefile for discord_presence plugin
 ifeq ($(OS),Windows_NT)
-    SUFFIX = dll
+    SUFFIX ?= dll
 else
     UNAME_S := $(shell uname -s)
     ifeq ($(UNAME_S),Darwin)
-        SUFFIX = dylib
+        SUFFIX ?= dylib
         DEADBEEF_OSX = /Applications/DeaDBeeF.app
     else
-        SUFFIX = so
+        SUFFIX ?= so
     endif
 endif
 
