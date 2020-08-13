@@ -11,9 +11,9 @@ else
     endif
 endif
 
-CC=gcc
-CXX=g++
-STD=gnu99
+CC?=gcc
+CXX?=g++
+STD?=gnu99
 CFLAGS+=-fPIC -I /usr/local/include -I discord-rpc/include -I . -Wall
 CXXFLAGS+=-fPIC -I /usr/local/include -I . -Wall
 ifeq ($(UNAME_S),Darwin)
@@ -36,7 +36,7 @@ all: submodules_load libdiscord-rpc.a discord_presence
 
 discord_presence:
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
-	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS) $(LDFLAGS)
+	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
 
 libdiscord-rpc.a: discord-rpc-patch
 	cd discord-rpc && $(MAKE)

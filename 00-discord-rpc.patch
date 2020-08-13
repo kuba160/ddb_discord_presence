@@ -4,6 +4,8 @@ index 0000000..0ba63bb
 --- /dev/null
 +++ b/Makefile
 @@ -0,0 +1,30 @@
++CC?=gcc
++CXX?=g++
 +SRC_DIR := ./src
 +SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 +ifeq ($(OS),Windows_NT)
@@ -13,8 +15,7 @@ index 0000000..0ba63bb
 +endif
 +
 +OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(SRC_DIR)/%.o,$(SRC_FILES))
-+CXXFLAGS := -I thirdparty/rapidjson-1.1.0/include/ -I include/ -DDISCORD_LINUX -std=gnu++11 -fPIC
-+LIBS := -lpthread
++CXXFLAGS += -I ../thirdparty/rapidjson-1.1.0/include -I ./thirdparty/rapidjson-1.1.0/include -I ./include -DDISCORD_LINUX -std=gnu++11 -fPIC
 +RAPIDJSON = thirdparty/rapidjson-1.1.0
 +
 +all: $(RAPIDJSON) libdiscord-rpc.a
@@ -23,7 +24,7 @@ index 0000000..0ba63bb
 +	ar rcs src/$@ $^
 +
 +$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
-+	g++ $(CPPFLAGS) $(CXXFLAGS) -c -o $@ $<
++	$(CXX) $(CXXFLAGS) $(LDFLAGS) -c -o $@ $<
 +
 +clean:
 +	rm -f $(SRC_DIR)/*.o
