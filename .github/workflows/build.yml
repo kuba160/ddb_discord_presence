@@ -51,7 +51,7 @@ jobs:
      - name: Build ddb_discord_presence
        run: msys2do make && mkdir binary && make install PREFIX=./binary
      - name: Build ddb_discord_presence with debugging symbols
-       run: msys2do make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
+       run: msys2do make clean && make DEBUG=1 CC=gcc && mkdir binary_debug && make install PREFIX=./binary_debug
      - name: Upload artifact windows-${{ steps.vars.outputs.sha_short }}.zip
        uses: actions/upload-artifact@v1
        with:
