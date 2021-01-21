@@ -231,6 +231,15 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
                 }
             }
             break;
+        case DB_EV_SONGFINISHED:
+            if(discord_enabled) {
+            //account for looped songs
+            if(((ddb_event_track_t *)ctx)->track == deadbeef->streamer_get_playing_track){
+                float sameitem_length = deadbeef->pl_get_item_duration(((ddb_event_track_t *)ctx)->track);
+                updateDiscordPresence(STATUS_SONGCHANGED, sameitem_length);
+                }
+            }
+            break;
         case DB_EV_SEEKED:
             if (discord_enabled) {
                 updateDiscordPresence(STATUS_SEEKED, 0);
