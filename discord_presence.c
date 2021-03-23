@@ -1,6 +1,6 @@
 /*
     Discord Rich Presence for DeaDBeeF
-    Copyright (C) 2018 Jakub Wasylków <kuba_160@protonmail.com>
+    Copyright (C) 2018-2021 Jakub Wasylków <kuba_160@protonmail.com>
 
     This software is provided 'as-is', without any express or implied
     warranty.  In no event will the authors be held liable for any damages
@@ -327,7 +327,7 @@ DB_misc_t plugin = {
                     "https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0",
     .plugin.copyright =
         "Discord Rich Presence Plugin for DeaDBeeF\n"
-        "Copyright (C) 2018 Jakub Wasylków <kuba_160@protonmail.com>\n"
+        "Copyright (C) 2018-2021 Jakub Wasylków <kuba_160@protonmail.com>\n"
         "\n"
         "This software is provided 'as-is', without any express or implied\n"
         "warranty.  In no event will the authors be held liable for any damages\n"
