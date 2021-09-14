@@ -4,8 +4,8 @@ index 0000000..0ba63bb
 --- /dev/null
 +++ b/Makefile
 @@ -0,0 +1,30 @@
-+CC?=gcc
-+CXX?=g++
++CC?=cc
++CXX?=c++
 +SRC_DIR := ./src
 +SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
 +ifeq ($(OS),Windows_NT)

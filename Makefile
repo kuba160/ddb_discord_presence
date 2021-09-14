@@ -11,8 +11,8 @@ else
     endif
 endif
 
-CC?=gcc
-CXX?=g++
+CC=cc
+CXX=c++
 STD?=gnu99
 CFLAGS+=-fPIC -I /usr/local/include -I discord-rpc/include -I . -Wall
 CXXFLAGS+=-fPIC -I /usr/local/include -I . -Wall
