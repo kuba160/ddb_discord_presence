@@ -1,6 +1,6 @@
 /*
     Discord Rich Presence for DeaDBeeF
-    Copyright (C) 2018 Jakub Wasylków <kuba_160@protonmail.com>
+    Copyright (C) 2018-2021 Jakub Wasylków <kuba_160@protonmail.com>
 
     This software is provided 'as-is', without any express or implied
     warranty.  In no event will the authors be held liable for any damages
@@ -36,6 +36,8 @@ DB_misc_t plugin;
 
 DB_functions_t *deadbeef;
 char discord_enabled = 0;
+int playback_resume = 0;
+int playback_resume_status = 0;
 
 static void discordInit() {
     DiscordEventHandlers handlers;
@@ -99,6 +101,18 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // Arguments:
     //     playback_status: as above
     //     song_len: set only if playback_status=STATUS_SONGCHANGED
+
+    // HACK, fix for playback resumption on start
+    if(playback_resume && (playback_status == STATUS_SONGCHANGED || playback_status == STATUS_SEEKED)) {
+        playback_resume--;
+        if (playback_resume_status) {
+            playback_status = STATUS_PAUSED;
+            if (deadbeef->conf_get_int ("discord_presence.hide_on_pause", 1)) {
+                Discord_ClearPresence();
+                return;
+            }
+        }
+    }
 
     DiscordRichPresence discordPresence;
     memset (&discordPresence, 0, sizeof(discordPresence));
@@ -238,7 +252,12 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
             break;
         case DB_EV_PAUSED:
             if (discord_enabled) {
-                updateDiscordPresence (p1, 0);
+                if (p1 && deadbeef->conf_get_int ("discord_presence.hide_on_pause", 1)) {
+                    Discord_ClearPresence();
+                }
+                else {
+                    updateDiscordPresence (p1, 0);
+                }
             }
             break;
         case DB_EV_STOP:
@@ -257,6 +276,19 @@ discord_presence_start () {
         discordInit();
         discord_enabled = 1;
     }
+    // HACK, determine if resuming track
+    {
+        int resume = deadbeef->conf_get_int ("resume_last_session", 1);
+        int plt = deadbeef->conf_get_int ("resume.playlist", -1);
+        int track = deadbeef->conf_get_int ("resume.track", -1);
+        float pos = deadbeef->conf_get_float ("resume.position", -1);
+        int paused = deadbeef->conf_get_int ("resume.paused", 0);
+        if (resume && plt >= 0 && track >= 0 && pos >= 0) {
+            playback_resume = 3;
+            playback_resume_status = paused;
+        }
+    }
+
     return 0;
 }
 
@@ -277,14 +309,15 @@ static const char settings_dlg[] =
     "property \"Display track number/total track count \" checkbox discord_presence.show_tracknum 1;\n"
     "property \"Switch time elapsed to remaining time\" checkbox discord_presence.end_timestamp 0;\n"
     "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
-    "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n";
+    "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
+    "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n";
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 1,
-    .plugin.version_minor = 1,
+    .plugin.version_minor = 2,
     .plugin.id = "discord_presence",
     .plugin.name ="Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
@@ -294,7 +327,7 @@ DB_misc_t plugin = {
                     "https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0",
     .plugin.copyright =
         "Discord Rich Presence Plugin for DeaDBeeF\n"
-        "Copyright (C) 2018 Jakub Wasylków <kuba_160@protonmail.com>\n"
+        "Copyright (C) 2018-2021 Jakub Wasylków <kuba_160@protonmail.com>\n"
         "\n"
         "This software is provided 'as-is', without any express or implied\n"
         "warranty.  In no event will the authors be held liable for any damages\n"

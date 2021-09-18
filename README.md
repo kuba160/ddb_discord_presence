@@ -20,7 +20,13 @@ For more information about title formatting please visit [https://github.com/Dea
 ## Compile
 To compile discord_presence plugin simply do `make` and `sudo make install`. For debug build, compile with `make DEBUG=1`.
 
-#### More information
+## Troubleshooting
+
+#### Plugin not working with discord installed through flatpak
+
+Flatpak by default sandboxes applications which makes rich presence unavailable to other applications. To fix this issue look at this [wiki page](https://github.com/flathub/com.discordapp.Discord/wiki/Rich-Precense-(discord-rpc)).
+
+### More information
 This plugin uses `libdiscord-rpc` library. By running `make` it will automatically download discord-rpc library through submodule and it will be patched so the library is reallocable (`-fPIC`).
 It will build`libdiscord-rpc` library and then move static library file (`libdiscord-rpc.a`) into the main directory. Plugin will be linked with this file.
 
