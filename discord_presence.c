@@ -172,7 +172,7 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // time played
     discordPresence.startTimestamp = 0;
     discordPresence.endTimestamp = 0;
-    if (playback_status != STATUS_PAUSED) {
+    if (playback_status != STATUS_PAUSED && deadbeef->conf_get_int("discord_presence.end_timestamp", 0) != 2) {
         // startTimestamp
         discordPresence.startTimestamp = time(0);
         if (playback_status != STATUS_SONGCHANGED) {
@@ -308,7 +308,7 @@ static const char settings_dlg[] =
     "property \"State format\" entry discord_presence.state_script \"%artist%\";\n"
     "property \"Overwrite state format with playlist name\" checkbox discord_presence.playlist_on_state 0;\n"
     "property \"Display track number/total track count \" checkbox discord_presence.show_tracknum 1;\n"
-    "property \"Switch time elapsed to remaining time\" checkbox discord_presence.end_timestamp 0;\n"
+    "property \"Display time\" select[3] discord_presence.end_timestamp 0 \"Elapsed time\" \"Remaining time\" \"Don't display time\";\n"
     "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
     "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
     "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n";
