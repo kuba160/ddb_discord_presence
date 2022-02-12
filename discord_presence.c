@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "discord_rpc.h"
+#include "artwork/lastfm.h"
 
 DB_misc_t plugin;
 //#define trace(...) { deadbeef->log ( __VA_ARGS__); }
@@ -53,31 +54,32 @@ static void discordInit() {
 }
 
 static char * nowplaying_format_string (char * script) {
-    DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
+    DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
     if (!nowplaying) {
-        return 0;
+        return NULL;
     }
-    ddb_playlist_t * nowplaying_plt = deadbeef->plt_get_curr ();
-    char * code_script = deadbeef->tf_compile (script);
+    ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_curr();
+    char *code_script = deadbeef->tf_compile(script);
     ddb_tf_context_t context;
-    context._size = sizeof(ddb_tf_context_t);
-    context.flags = 0;
-    context.it = nowplaying;
-    context.plt = nowplaying_plt;
-    context.idx = 0;
-    context.id = 0;
-    context.iter = PL_MAIN;
-    context.update = 0;
-    context.dimmed = 0;
-    char * out = malloc(MAX_LEN);
-    if (out && code_script) {
-        deadbeef->tf_eval (&context, code_script, out, MAX_LEN);
-        trace ("nowplaying_format_string: \"%s\"\n",out);
-        deadbeef->tf_free (code_script);
+    {
+        memset(&context, 0, sizeof(ddb_tf_context_t));
+        context._size = sizeof(ddb_tf_context_t);
+        context.it = nowplaying;
+        context.plt = nowplaying_plt;
+        context.iter = PL_MAIN;
     }
-    deadbeef->pl_item_unref (nowplaying);
-    if (nowplaying_plt){
-        deadbeef->plt_unref (nowplaying_plt);
+    char *out = malloc(MAX_LEN);
+    if (out && code_script) {
+        *out = 0;
+        deadbeef->tf_eval(&context, code_script, out, MAX_LEN);
+        trace ("nowplaying_format_string: \"%s\"\n", out);
+    }
+    deadbeef->pl_item_unref(nowplaying);
+    if (nowplaying_plt) {
+        deadbeef->plt_unref(nowplaying_plt);
+    }
+    if (code_script) {
+        deadbeef->tf_free(code_script);
     }
     return out;
 }
@@ -121,7 +123,7 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     
     // title_text
     char * title_text;
-    deadbeef->conf_get_str ("discord_presence.title_script", "%title% $if(%ispaused%,'('paused')')", script, MAX_LEN);
+    deadbeef->conf_get_str ("discord_presence.title_script", "%title%$if(%ispaused%,' ('paused')')", script, MAX_LEN);
     title_text = nowplaying_format_string (script);
     discordPresence.details = title_text;
     
@@ -171,7 +173,7 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // time played
     discordPresence.startTimestamp = 0;
     discordPresence.endTimestamp = 0;
-    if (playback_status != STATUS_PAUSED) {
+    if (playback_status != STATUS_PAUSED && deadbeef->conf_get_int("discord_presence.end_timestamp", 0) != 2) {
         // startTimestamp
         discordPresence.startTimestamp = time(0);
         if (playback_status != STATUS_SONGCHANGED) {
@@ -191,6 +193,21 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // misc
     discordPresence.largeImageKey = "default";
     discordPresence.smallImageKey = 0;
+
+    char lastfm_link[MAX_LEN];
+    if (deadbeef->conf_get_int("discord_presence.lastfm_cover", 1)) {
+        char *lastfm_artist = nowplaying_format_string("%album artist%");
+        char *lastfm_album = nowplaying_format_string("%album%");
+        if (lastfm_artist && lastfm_album) {
+            int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
+            if (ret > 0) {
+                discordPresence.largeImageKey = lastfm_link;
+            }
+        }
+        free(lastfm_album);
+        free(lastfm_artist);
+    }
+
     if (playback_status == STATUS_PAUSED) {
         if (deadbeef->conf_get_int("discord_presence.paused_icon", 1))
             discordPresence.smallImageKey = "paused_circle";
@@ -303,21 +320,22 @@ discord_presence_stop () {
 
 static const char settings_dlg[] =
     "property \"Enable\" checkbox discord_presence.enable 1;\n"
-    "property \"Title format\" entry discord_presence.title_script \"%title% $if(%ispaused%,'('paused')')\";\n"
+    "property \"Title format\" entry discord_presence.title_script \"%title%$if(%ispaused%,' ('paused')')\";\n"
     "property \"State format\" entry discord_presence.state_script \"%artist%\";\n"
     "property \"Overwrite state format with playlist name\" checkbox discord_presence.playlist_on_state 0;\n"
     "property \"Display track number/total track count \" checkbox discord_presence.show_tracknum 1;\n"
-    "property \"Switch time elapsed to remaining time\" checkbox discord_presence.end_timestamp 0;\n"
+    "property \"Display time\" select[3] discord_presence.end_timestamp 0 \"Elapsed time\" \"Remaining time\" \"Don't display time\";\n"
     "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
     "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
-    "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n";
+    "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n"
+    "property \"Display cover from last.fm\" checkbox discord_presence.lastfm_cover 1;\n";
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 1,
-    .plugin.version_minor = 2,
+    .plugin.version_minor = 3,
     .plugin.id = "discord_presence",
     .plugin.name ="Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"

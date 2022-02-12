@@ -31,12 +31,14 @@ ifeq ($(UNAME_S),Darwin)
 endif
 PLUGNAME=discord_presence
 LIBS=libdiscord-rpc.a -lpthread
+ARTWORK_OBJS=artwork/artwork_internal.o artwork/escape.o artwork/lastfm.o
 
 all: submodules_load libdiscord-rpc.a discord_presence
 
 discord_presence:
+	$(MAKE) -C artwork
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
-	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
+	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
 
 libdiscord-rpc.a: discord-rpc-patch
 	cd discord-rpc && $(MAKE)
