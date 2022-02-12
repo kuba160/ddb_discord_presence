@@ -53,31 +53,32 @@ static void discordInit() {
 }
 
 static char * nowplaying_format_string (char * script) {
-    DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
+    DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
     if (!nowplaying) {
-        return 0;
+        return NULL;
     }
-    ddb_playlist_t * nowplaying_plt = deadbeef->plt_get_curr ();
-    char * code_script = deadbeef->tf_compile (script);
+    ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_curr();
+    char *code_script = deadbeef->tf_compile(script);
     ddb_tf_context_t context;
-    context._size = sizeof(ddb_tf_context_t);
-    context.flags = 0;
-    context.it = nowplaying;
-    context.plt = nowplaying_plt;
-    context.idx = 0;
-    context.id = 0;
-    context.iter = PL_MAIN;
-    context.update = 0;
-    context.dimmed = 0;
-    char * out = malloc(MAX_LEN);
-    if (out && code_script) {
-        deadbeef->tf_eval (&context, code_script, out, MAX_LEN);
-        trace ("nowplaying_format_string: \"%s\"\n",out);
-        deadbeef->tf_free (code_script);
+    {
+        memset(&context, 0, sizeof(ddb_tf_context_t));
+        context._size = sizeof(ddb_tf_context_t);
+        context.it = nowplaying;
+        context.plt = nowplaying_plt;
+        context.iter = PL_MAIN;
     }
-    deadbeef->pl_item_unref (nowplaying);
-    if (nowplaying_plt){
-        deadbeef->plt_unref (nowplaying_plt);
+    char *out = malloc(MAX_LEN);
+    if (out && code_script) {
+        *out = 0;
+        deadbeef->tf_eval(&context, code_script, out, MAX_LEN);
+        trace ("nowplaying_format_string: \"%s\"\n", out);
+    }
+    deadbeef->pl_item_unref(nowplaying);
+    if (nowplaying_plt) {
+        deadbeef->plt_unref(nowplaying_plt);
+    }
+    if (code_script) {
+        deadbeef->tf_free(code_script);
     }
     return out;
 }
