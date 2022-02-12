@@ -25,6 +25,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "discord_rpc.h"
+#include "artwork/lastfm.h"
 
 DB_misc_t plugin;
 //#define trace(...) { deadbeef->log ( __VA_ARGS__); }
@@ -192,6 +193,21 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // misc
     discordPresence.largeImageKey = "default";
     discordPresence.smallImageKey = 0;
+
+    char lastfm_link[MAX_LEN];
+    if (deadbeef->conf_get_int("discord_presence.lastfm_cover", 1)) {
+        char *lastfm_artist = nowplaying_format_string("%album artist%");
+        char *lastfm_album = nowplaying_format_string("%album%");
+        if (lastfm_artist && lastfm_album) {
+            int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
+            if (ret > 0) {
+                discordPresence.largeImageKey = lastfm_link;
+            }
+        }
+        free(lastfm_album);
+        free(lastfm_artist);
+    }
+
     if (playback_status == STATUS_PAUSED) {
         if (deadbeef->conf_get_int("discord_presence.paused_icon", 1))
             discordPresence.smallImageKey = "paused_circle";
@@ -311,7 +327,8 @@ static const char settings_dlg[] =
     "property \"Display time\" select[3] discord_presence.end_timestamp 0 \"Elapsed time\" \"Remaining time\" \"Don't display time\";\n"
     "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
     "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
-    "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n";
+    "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n"
+    "property \"Display cover from last.fm\" checkbox discord_presence.lastfm_cover 1;\n";
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
