@@ -121,7 +121,7 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     
     // title_text
     char * title_text;
-    deadbeef->conf_get_str ("discord_presence.title_script", "%title% $if(%ispaused%,'('paused')')", script, MAX_LEN);
+    deadbeef->conf_get_str ("discord_presence.title_script", "%title%$if(%ispaused%,' ('paused')')", script, MAX_LEN);
     title_text = nowplaying_format_string (script);
     discordPresence.details = title_text;
     
@@ -303,7 +303,7 @@ discord_presence_stop () {
 
 static const char settings_dlg[] =
     "property \"Enable\" checkbox discord_presence.enable 1;\n"
-    "property \"Title format\" entry discord_presence.title_script \"%title% $if(%ispaused%,'('paused')')\";\n"
+    "property \"Title format\" entry discord_presence.title_script \"%title%$if(%ispaused%,' ('paused')')\";\n"
     "property \"State format\" entry discord_presence.state_script \"%artist%\";\n"
     "property \"Overwrite state format with playlist name\" checkbox discord_presence.playlist_on_state 0;\n"
     "property \"Display track number/total track count \" checkbox discord_presence.show_tracknum 1;\n"
