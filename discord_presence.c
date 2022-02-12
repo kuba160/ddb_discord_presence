@@ -154,17 +154,37 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     // tracknum
     int nowplaying_num = 0;
     int nowplaying_all = 0;
-    if (deadbeef->conf_get_int ("discord_presence.show_tracknum", 1)) {
-        DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
+    if ((nowplaying_num = deadbeef->conf_get_int("discord_presence.show_tracknum", 1))) {
+        // using nowplaying num as type selection
+        DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
         if (nowplaying) {
-            nowplaying_num = deadbeef->pl_get_idx_of (nowplaying) + 1;
-            deadbeef->pl_item_unref (nowplaying);
-        }
+            while (1) {
+                if (nowplaying_num == 3 || nowplaying_num == 2) {
+                    // Set index in album
+                    DB_metaInfo_t *track = deadbeef->pl_meta_for_key(nowplaying, "track");
+                    DB_metaInfo_t *totaltracks = deadbeef->pl_meta_for_key(nowplaying, "numtracks");
 
-        ddb_playlist_t * nowplaying_plt = deadbeef->plt_get_for_idx (deadbeef->streamer_get_current_playlist());
-        if (nowplaying_plt) {
-            nowplaying_all = deadbeef->plt_get_item_count (nowplaying_plt, PL_MAIN);
-            deadbeef->plt_unref (nowplaying_plt);
+                    if (track && totaltracks) {
+                        // assuming value is not NULL
+                        nowplaying_num = atoi(track->value);
+                        nowplaying_all = atoi(totaltracks->value);
+                        break;
+                    }
+                    if (nowplaying_num == 2) {
+                        break;
+                    }
+                    /* fall through on type=3 */
+                }
+                // Set index in playlist
+                nowplaying_num = deadbeef->pl_get_idx_of(nowplaying) + 1;
+                ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_for_idx(deadbeef->streamer_get_current_playlist());
+                if (nowplaying_plt) {
+                    nowplaying_all = deadbeef->plt_get_item_count(nowplaying_plt, PL_MAIN);
+                    deadbeef->plt_unref(nowplaying_plt);
+                }
+                break;
+            }
+            deadbeef->pl_item_unref(nowplaying);
         }
     }
     discordPresence.partySize = nowplaying_num;
@@ -323,7 +343,7 @@ static const char settings_dlg[] =
     "property \"Title format\" entry discord_presence.title_script \"%title%$if(%ispaused%,' ('paused')')\";\n"
     "property \"State format\" entry discord_presence.state_script \"%artist%\";\n"
     "property \"Overwrite state format with playlist name\" checkbox discord_presence.playlist_on_state 0;\n"
-    "property \"Display track number/total track count \" checkbox discord_presence.show_tracknum 1;\n"
+    "property \"Range display '(n of m)'\" select[4] discord_presence.show_tracknum 1 \"Hidden\" \"Track index in playlist\" \"Track index in album\" \"Track index in album/playlist (fallback)\";\n"
     "property \"Display time\" select[3] discord_presence.end_timestamp 0 \"Elapsed time\" \"Remaining time\" \"Don't display time\";\n"
     "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
     "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
@@ -335,7 +355,7 @@ DB_misc_t plugin = {
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 1,
-    .plugin.version_minor = 3,
+    .plugin.version_minor = 4,
     .plugin.id = "discord_presence",
     .plugin.name ="Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
