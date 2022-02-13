@@ -116,6 +116,11 @@ static void updateDiscordPresence(int playback_status, float song_len) {
         }
     }
 
+    DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
+    if (!nowplaying) {
+        return;
+    }
+
     DiscordRichPresence discordPresence;
     memset (&discordPresence, 0, sizeof(discordPresence));
 
@@ -156,35 +161,31 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     int nowplaying_all = 0;
     if ((nowplaying_num = deadbeef->conf_get_int("discord_presence.show_tracknum", 1))) {
         // using nowplaying num as type selection
-        DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
-        if (nowplaying) {
-            while (1) {
-                if (nowplaying_num == 3 || nowplaying_num == 2) {
-                    // Set index in album
-                    DB_metaInfo_t *track = deadbeef->pl_meta_for_key(nowplaying, "track");
-                    DB_metaInfo_t *totaltracks = deadbeef->pl_meta_for_key(nowplaying, "numtracks");
+        while (1) {
+            if (nowplaying_num == 3 || nowplaying_num == 2) {
+                // Set index in album
+                DB_metaInfo_t *track = deadbeef->pl_meta_for_key(nowplaying, "track");
+                DB_metaInfo_t *totaltracks = deadbeef->pl_meta_for_key(nowplaying, "numtracks");
 
-                    if (track && totaltracks) {
-                        // assuming value is not NULL
-                        nowplaying_num = atoi(track->value);
-                        nowplaying_all = atoi(totaltracks->value);
-                        break;
-                    }
-                    if (nowplaying_num == 2) {
-                        break;
-                    }
-                    /* fall through on type=3 */
+                if (track && totaltracks) {
+                    // assuming value is not NULL
+                    nowplaying_num = atoi(track->value);
+                    nowplaying_all = atoi(totaltracks->value);
+                    break;
                 }
-                // Set index in playlist
-                nowplaying_num = deadbeef->pl_get_idx_of(nowplaying) + 1;
-                ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_for_idx(deadbeef->streamer_get_current_playlist());
-                if (nowplaying_plt) {
-                    nowplaying_all = deadbeef->plt_get_item_count(nowplaying_plt, PL_MAIN);
-                    deadbeef->plt_unref(nowplaying_plt);
+                if (nowplaying_num == 2) {
+                    break;
                 }
-                break;
+                /* fall through on type=3 */
             }
-            deadbeef->pl_item_unref(nowplaying);
+            // Set index in playlist
+            nowplaying_num = deadbeef->pl_get_idx_of(nowplaying) + 1;
+            ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_for_idx(deadbeef->streamer_get_current_playlist());
+            if (nowplaying_plt) {
+                nowplaying_all = deadbeef->plt_get_item_count(nowplaying_plt, PL_MAIN);
+                deadbeef->plt_unref(nowplaying_plt);
+            }
+            break;
         }
     }
     discordPresence.partySize = nowplaying_num;
@@ -216,16 +217,16 @@ static void updateDiscordPresence(int playback_status, float song_len) {
 
     char lastfm_link[MAX_LEN];
     if (deadbeef->conf_get_int("discord_presence.lastfm_cover", 1)) {
-        char *lastfm_artist = nowplaying_format_string("%album artist%");
-        char *lastfm_album = nowplaying_format_string("%album%");
-        if (lastfm_artist && lastfm_album) {
+        char lastfm_artist[MAX_LEN]; *lastfm_artist = 0;
+        char lastfm_album[MAX_LEN]; *lastfm_album = 0;
+        deadbeef->pl_get_meta(nowplaying, "artist", lastfm_artist, MAX_LEN);
+        deadbeef->pl_get_meta(nowplaying, "album", lastfm_album, MAX_LEN);
+        if (lastfm_artist[0] && lastfm_album[0]) {
             int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
             if (ret > 0) {
                 discordPresence.largeImageKey = lastfm_link;
             }
         }
-        free(lastfm_album);
-        free(lastfm_artist);
     }
 
     if (playback_status == STATUS_PAUSED) {
@@ -245,6 +246,8 @@ static void updateDiscordPresence(int playback_status, float song_len) {
         free (state_text);
     if (icon_text)
         free (icon_text);
+
+    deadbeef->pl_item_unref(nowplaying);
 }
 
 static int
@@ -355,7 +358,7 @@ DB_misc_t plugin = {
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 1,
-    .plugin.version_minor = 4,
+    .plugin.version_minor = 5,
     .plugin.id = "discord_presence",
     .plugin.name ="Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
