@@ -1,11 +1,11 @@
 diff --git a/Makefile b/Makefile
 new file mode 100644
-index 0000000..0ba63bb
+index 0000000..4b143c0
 --- /dev/null
 +++ b/Makefile
-@@ -0,0 +1,30 @@
-+CC?=gcc
-+CXX?=g++
+@@ -0,0 +1,29 @@
++CC=zig cc
++CXX=zig c++
 +TARGET?=$(shell llvm-config --host-target)
 +SRC_DIR := ./src
 +SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)

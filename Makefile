@@ -55,20 +55,17 @@ else
 endif
 RPC_FILES := $(patsubst $(RPC_DIR)/%.cpp,$(RPC_DIR)/%.o,$(RPC_FILES))
 
-all: submodules_load libdiscord-rpc.a discord_presence
+all: submodules_load discord_presence
 
-discord_presence: discord-rpc-patch discord-rpc $(ARTWORK_OBJS)
+discord_presence: discord-rpc $(ARTWORK_OBJS)
 	$(CC)  --target=$(TARGET) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c -o $(PLUGNAME).o
 	$(CXX) --target=$(TARGET) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(RPC_FILES) $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
 
 $(ARTWORK_OBJS):
 	$(MAKE) -C artwork/ TARGET=$(TARGET)
 
-discord-rpc:
+discord-rpc: discord-rpc-patch
 	$(MAKE) -C discord-rpc/ TARGET=$(TARGET)
-#libdiscord-rpc.a: discord-rpc-patch
-#	cd discord-rpc && $(MAKE)
-#	cp discord-rpc/src/libdiscord-rpc.a .
 
 submodules_load:
 	git submodule init
@@ -96,4 +93,4 @@ clean:
 	$(MAKE) -C artwork/ clean
 	rm -fv $(PLUGNAME).o
 
-.PHONY: discord-rpc
+.PHONY: discord-rpc-patch
