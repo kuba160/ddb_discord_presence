@@ -1,6 +1,6 @@
 diff --git a/Makefile b/Makefile
 new file mode 100644
-index 0000000..4b143c0
+index 0000000..1897dde
 --- /dev/null
 +++ b/Makefile
 @@ -0,0 +1,29 @@
@@ -16,7 +16,7 @@ index 0000000..4b143c0
 +endif
 +
 +OBJ_FILES := $(patsubst $(SRC_DIR)/%.cpp,$(SRC_DIR)/%.o,$(SRC_FILES))
-+CXXFLAGS += -I ../thirdparty/rapidjson-1.1.0/include -I ./thirdparty/rapidjson-1.1.0/include -I ./include -DDISCORD_LINUX -std=gnu++11 -fPIC
++CXXFLAGS += -I ../thirdparty/rapidjson-1.1.0/include -I ./thirdparty/rapidjson-1.1.0/include -I ./include -DDISCORD_LINUX -std=gnu++11 -fPIC -O2 -fsanitize=undefined
 +RAPIDJSON = thirdparty/rapidjson-1.1.0
 +
 +all: $(RAPIDJSON) $(OBJ_FILES)
