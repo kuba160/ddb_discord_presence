@@ -19,7 +19,7 @@ jobs:
     - name: Download DeaDBeeF header
       run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
     - name: Install zig
-      run: wget https://ziglang.org/download/0.9.1/zig-linux-x86_64-$ZIG_VERSION.tar.xz -O - | tar -xJ  && mv zig-* zig && export PATH=$PATH:$PWD/zig
+      run: wget -q https://ziglang.org/download/0.9.1/zig-linux-x86_64-$ZIG_VERSION.tar.xz -O - | tar -xJ  && mv zig-* zig && echo "$PWD/zig" >> $GITHUB_PATH && ls
     - name: Build ddb_discord_presence
       run: make && mkdir binary && make install PREFIX=./binary
     - name: Build ddb_discord_presence with debugging symbols
