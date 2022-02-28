@@ -6,9 +6,10 @@ index 0000000..0ba63bb
 @@ -0,0 +1,30 @@
 +CC?=gcc
 +CXX?=g++
++TARGET?=$(shell llvm-config --host-target)
 +SRC_DIR := ./src
 +SRC_FILES := $(wildcard $(SRC_DIR)/*.cpp)
-+ifeq ($(OS),Windows_NT)
++ifeq ($(TARGET),x86_64-windows-gnu)
 +    SRC_FILES := $(filter-out $(SRC_DIR)/connection_unix.cpp $(SRC_DIR)/discord_register_linux.cpp, $(SRC_FILES))
 +else
 +    SRC_FILES := $(filter-out $(SRC_DIR)/connection_win.cpp $(SRC_DIR)/discord_register_win.cpp $(SRC_DIR)/dllmain.cpp, $(SRC_FILES))
@@ -18,13 +19,10 @@ index 0000000..0ba63bb
 +CXXFLAGS += -I ../thirdparty/rapidjson-1.1.0/include -I ./thirdparty/rapidjson-1.1.0/include -I ./include -DDISCORD_LINUX -std=gnu++11 -fPIC
 +RAPIDJSON = thirdparty/rapidjson-1.1.0
 +
-+all: $(RAPIDJSON) libdiscord-rpc.a
-+
-+libdiscord-rpc.a: $(OBJ_FILES)
-+	ar rcs src/$@ $^
++all: $(RAPIDJSON) $(OBJ_FILES)
 +
 +$(SRC_DIR)/%.o: $(SRC_DIR)/%.cpp
-+	$(CXX) $(CXXFLAGS) $(LDFLAGS) -c -o $@ $<
++	$(CXX) --target=$(TARGET) $(CXXFLAGS) $(LDFLAGS) -c -o $@ $<
 +
 +clean:
 +	rm -f $(SRC_DIR)/*.o

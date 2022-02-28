@@ -1,21 +1,30 @@
 # Makefile for discord_presence plugin
-ifeq ($(OS),Windows_NT)
-    SUFFIX ?= dll
+CC=zig cc
+CXX=zig c++
+
+TARGET_ARCH?=x86_64
+
+
+CROSS?=linux
+
+ifeq ($(CROSS),windows)
+    TARGET=$(TARGET_ARCH)-windows-gnu
+    SUFFIX=dll
+else ifeq ($(CROSS),linux)
+    TARGET=$(TARGET_ARCH)-linux-gnu
+    SUFFIX=so
+else ifeq ($(CROSS),macos)
+    TARGET=$(TARGET_ARCH)-macos-gnu
+    SUFFIX=dylib
 else
-    UNAME_S := $(shell uname -s)
-    ifeq ($(UNAME_S),Darwin)
-        SUFFIX ?= dylib
-        DEADBEEF_OSX = /Applications/DeaDBeeF.app
-    else
-        SUFFIX ?= so
-    endif
+    $(error unknown cross platform)
 endif
 
-CC?=gcc
-CXX?=g++
 STD?=gnu99
 CFLAGS+=-fPIC -I /usr/local/include -I discord-rpc/include -I . -Wall
 CXXFLAGS+=-fPIC -I /usr/local/include -I . -Wall
+
+
 ifeq ($(UNAME_S),Darwin)
     CFLAGS+=-I $(DEADBEEF_OSX)/Contents/Headers
     CXXFLAGS+=-I $(DEADBEEF_OSX)/Contents/Headers
@@ -23,26 +32,43 @@ endif
 ifeq ($(DEBUG),1)
 CFLAGS +=-g -O0
 CXXFLAGS +=-g -O0
+else
+CFLAGS += -O2
+CXXFLAGS += -O2
 endif
 
 PREFIX=/usr/local/lib/deadbeef
 ifeq ($(UNAME_S),Darwin)
     PREFIX=$(DEADBEEF_OSX)/Contents/Resources
 endif
-PLUGNAME=discord_presence
-LIBS=libdiscord-rpc.a -lpthread
+
 ARTWORK_OBJS=artwork/artwork_internal.o artwork/escape.o artwork/lastfm.o
+PLUGNAME=discord_presence
+
+RPC_DIR :=discord-rpc/src
+RPC_FILES := $(wildcard $(RPC_DIR)/*.cpp)
+
+ifeq ($(TARGET),x86_64-windows-gnu)
+    RPC_FILES := $(filter-out $(RPC_DIR)/connection_unix.cpp $(RPC_DIR)/discord_register_linux.cpp, $(RPC_FILES))
+else
+    RPC_FILES := $(filter-out $(RPC_DIR)/connection_win.cpp $(RPC_DIR)/discord_register_win.cpp $(RPC_DIR)/dllmain.cpp, $(RPC_FILES))
+endif
+RPC_FILES := $(patsubst $(RPC_DIR)/%.cpp,$(RPC_DIR)/%.o,$(RPC_FILES))
 
 all: submodules_load libdiscord-rpc.a discord_presence
 
-discord_presence:
-	$(MAKE) -C artwork
-	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
-	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
+discord_presence: discord-rpc-patch discord-rpc $(ARTWORK_OBJS)
+	$(CC)  --target=$(TARGET) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c -o $(PLUGNAME).o
+	$(CXX) --target=$(TARGET) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(RPC_FILES) $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
 
-libdiscord-rpc.a: discord-rpc-patch
-	cd discord-rpc && $(MAKE)
-	cp discord-rpc/src/libdiscord-rpc.a .
+$(ARTWORK_OBJS):
+	$(MAKE) -C artwork/ TARGET=$(TARGET)
+
+discord-rpc:
+	$(MAKE) -C discord-rpc/ TARGET=$(TARGET)
+#libdiscord-rpc.a: discord-rpc-patch
+#	cd discord-rpc && $(MAKE)
+#	cp discord-rpc/src/libdiscord-rpc.a .
 
 submodules_load:
 	git submodule init
@@ -65,6 +91,9 @@ discord-rpc-patch-reverse:
 install:
 	cp $(PLUGNAME).$(SUFFIX) $(PREFIX)
 
-clean: discord-rpc-patch-reverse
-	cd discord-rpc && git clean -df && git reset --hard
-	rm -fv $(PLUGNAME).o $(PLUGNAME).$(SUFFIX)
+clean:
+	$(MAKE) -C discord-rpc/ clean
+	$(MAKE) -C artwork/ clean
+	rm -fv $(PLUGNAME).o
+
+.PHONY: discord-rpc
