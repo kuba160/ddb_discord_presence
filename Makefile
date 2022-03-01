@@ -93,4 +93,4 @@ clean:
 	$(MAKE) -C artwork/ clean
 	rm -fv $(PLUGNAME).o
 
-.PHONY: discord-rpc-patch
+.PHONY: discord-rpc discord-rpc-patch

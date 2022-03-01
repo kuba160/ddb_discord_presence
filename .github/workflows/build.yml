@@ -20,14 +20,16 @@ jobs:
       run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
     - name: Install zig
       run: wget -q https://ziglang.org/download/0.9.1/zig-linux-x86_64-$ZIG_VERSION.tar.xz -O - | tar -xJ  && mv zig-* zig && echo "$PWD/zig" >> $GITHUB_PATH && ls
+    - name: Patch discord-rpc
+      run: cd discord-rpc && git apply ../00-discord-rpc.patch
     - name: Build ddb_discord_presence (Linux)
       run: make && mkdir binary && make install PREFIX=./binary
     - name: Build ddb_discord_presence (Windows)
-      run: make clean && make CROSS=windows && make install PREFIX=./binary
+      run: make clean && make CROSS=windows && make CROSS=windows install PREFIX=./binary
     - name: Build ddb_discord_presence (macOS x86_64)
-      run: make clean && make CROSS=macos && make install PREFIX=./binary && mv binary/discord_presence.dylib d1.dylib
+      run: make clean && make CROSS=macos && make CROSS=macos install PREFIX=./binary && mv binary/discord_presence.dylib d1.dylib
     - name: Build ddb_discord_presence (macOS aarch64)
-      run: make clean && make CROSS=macos TARGET_ARCH=aarch64 && make install PREFIX=./binary && mv binary/discord_presence.dylib d2.dylib
+      run: make clean && make CROSS=macos TARGET_ARCH=aarch64 && make CROSS=macos install PREFIX=./binary && mv binary/discord_presence.dylib d2.dylib
     - name: Create macOS bundle
       run: llvm-lipo-10 -create -output binary/discord_presence.dylib d1.dylib d2.dylib
     - name: Upload artifact discord_presence-${{ steps.vars.outputs.sha_short }}.zip
