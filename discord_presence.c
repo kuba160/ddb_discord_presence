@@ -223,8 +223,16 @@ static void updateDiscordPresence(int playback_status, float song_len) {
         deadbeef->pl_get_meta(nowplaying, "album", lastfm_album, MAX_LEN);
         if (lastfm_artist[0] && lastfm_album[0]) {
             int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
-            if (ret > 0) {
+            if (ret > 0)
                 discordPresence.largeImageKey = lastfm_link;
+            else if (deadbeef->conf_get_int("discord_presence.lastfm_cover_fallback", 1)) {
+                *lastfm_artist = 0;
+                deadbeef->pl_get_meta(nowplaying, "album artist", lastfm_artist, MAX_LEN);
+                if (lastfm_artist[0]) {
+                    int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
+                    if (ret > 0)
+                        discordPresence.largeImageKey = lastfm_link;
+                }
             }
         }
     }
@@ -351,7 +359,8 @@ static const char settings_dlg[] =
     "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
     "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
     "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n"
-    "property \"Display cover from last.fm\" checkbox discord_presence.lastfm_cover 1;\n";
+    "property \"Display cover from last.fm\" checkbox discord_presence.lastfm_cover 1;\n"
+    "property \"Fallback to album artist for last.fm cover\" checkbox discord_presence.lastfm_cover_fallback 1;\n";
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
