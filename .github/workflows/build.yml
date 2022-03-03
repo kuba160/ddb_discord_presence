@@ -1,6 +1,6 @@
 name: ddb_discord_presence plugin build
 
-on: [push]
+on: [push,pull_request]
 
 jobs:
   build_linux:
