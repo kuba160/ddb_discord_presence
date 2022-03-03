@@ -230,8 +230,10 @@ static void updateDiscordPresence(int playback_status, float song_len) {
                 deadbeef->pl_get_meta(nowplaying, artist_keys[i], lastfm_artist, MAX_LEN);
                 if (lastfm_artist[0]) {
                     int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
-                    if (ret > 0)
+                    if (ret > 0) {
                         discordPresence.largeImageKey = lastfm_link;
+                        break;
+                    }
                 }
             }
         }
