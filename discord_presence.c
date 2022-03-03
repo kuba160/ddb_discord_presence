@@ -215,16 +215,26 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     discordPresence.largeImageKey = "default";
     discordPresence.smallImageKey = 0;
 
+    static const char* artist_keys[4] = { "artist", "album artist", "composer", "performer" };
+#   define ARTIST_KEY_COUNT (sizeof(artist_keys) / sizeof(artist_keys[0]))
+    
     char lastfm_link[MAX_LEN];
     if (deadbeef->conf_get_int("discord_presence.lastfm_cover", 1)) {
-        char lastfm_artist[MAX_LEN]; *lastfm_artist = 0;
         char lastfm_album[MAX_LEN]; *lastfm_album = 0;
-        deadbeef->pl_get_meta(nowplaying, "artist", lastfm_artist, MAX_LEN);
         deadbeef->pl_get_meta(nowplaying, "album", lastfm_album, MAX_LEN);
-        if (lastfm_artist[0] && lastfm_album[0]) {
-            int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
-            if (ret > 0) {
-                discordPresence.largeImageKey = lastfm_link;
+        
+        if (lastfm_album[0]) {
+            char lastfm_artist[MAX_LEN];
+            for (int i = 0; i < ARTIST_KEY_COUNT; ++i) {
+                *lastfm_artist = 0;
+                deadbeef->pl_get_meta(nowplaying, artist_keys[i], lastfm_artist, MAX_LEN);
+                if (lastfm_artist[0]) {
+                    int ret = fetch_from_lastfm(lastfm_artist, lastfm_album, lastfm_link, MAX_LEN);
+                    if (ret > 0) {
+                        discordPresence.largeImageKey = lastfm_link;
+                        break;
+                    }
+                }
             }
         }
     }
