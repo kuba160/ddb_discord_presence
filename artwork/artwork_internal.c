@@ -35,6 +35,7 @@
 #include <limits.h>
 #include "deadbeef/deadbeef.h"
 #include "artwork_internal.h"
+#include "request_buffer.h"
 
 //#define trace(...) { fprintf(stderr, __VA_ARGS__); }
 #define trace(...)
@@ -95,19 +96,24 @@ close_http_request (DB_FILE *request) {
     deadbeef->fclose (request);
 }
 
-size_t
-artwork_http_request (const char *url, char *buffer, const size_t buffer_size) {
-    DB_FILE *request = new_http_request (url);
+const char*
+artwork_http_request (const char *url) {
+    DB_FILE *request = new_http_request(url);
     if (!request) {
-        return 0;
+        return NULL;
     }
-
-    const size_t size = deadbeef->fread (buffer, 1, buffer_size-1, request);
-    buffer[size] = '\0';
-
-    close_http_request (request);
-
-    return size;
+    
+    const size_t size = deadbeef->fgetlength(request);
+    if (size + 1 > request_buffer_size) {
+        request_buffer = realloc(request_buffer, sizeof(char) * (size + 1));
+        request_buffer_size = size + 1;
+    }
+    deadbeef->fread(request_buffer, 1, size, request);
+    request_buffer[size] = '\0';
+    
+    close_http_request(request);
+    
+    return request_buffer;
 }
 
 static int

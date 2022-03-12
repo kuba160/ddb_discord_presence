@@ -31,7 +31,7 @@
 
 #define FETCH_CONCURRENT_LIMIT 5
 
-size_t artwork_http_request(const char *url, char *buffer, const size_t max_bytes);
+const char* artwork_http_request (const char *url);
 
 void artwork_abort_all_http_requests (void);
 

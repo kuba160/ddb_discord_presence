@@ -71,11 +71,13 @@ int fetch_from_lastfm (const char *artist, const char *album, char *dest, const 
     }
 
     trace("fetch_from_lastfm: query: %s\n", url);
-    char buffer[1000];
-    /*const size_t size = */artwork_http_request(url, buffer, sizeof(buffer));
+    const char* buffer = artwork_http_request(url);
 
-    free (url);
+    free(url);
     url = NULL;
+    
+    if (!buffer)
+        return -1;
 
     char *img = strstr(buffer, MEGA_IMAGE_TAG);
     if (img) {

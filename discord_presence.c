@@ -26,6 +26,10 @@
 #include <stdlib.h>
 #include "discord_rpc.h"
 #include "artwork/lastfm.h"
+#include "artwork/request_buffer.h"
+
+char* request_buffer = NULL;
+size_t request_buffer_size = 0;
 
 DB_misc_t plugin;
 //#define trace(...) { deadbeef->log ( __VA_ARGS__); }
@@ -338,7 +342,6 @@ discord_presence_start () {
             playback_resume_status = paused;
         }
     }
-
     return 0;
 }
 
@@ -348,6 +351,10 @@ discord_presence_stop () {
         Discord_Shutdown();
         discord_enabled = 0;
     }
+    
+    free(request_buffer);
+    request_buffer = NULL;
+    request_buffer_size = 0;
     return 0;
 }
 
