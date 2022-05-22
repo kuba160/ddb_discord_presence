@@ -37,5 +37,6 @@ It will build`libdiscord-rpc` library and then move static library file (`libdis
 
 To compile without building `libdiscord-rpc` run `make discord_presence`.
 
+## License
 
-
+This work is licensed under multiple licences. Plugin itself and artwork code (with exception of escape.c) is licensed under Zlib. artwork/escape.c is licensed under curl license. discord-rpc is itself licensed under MIT.
