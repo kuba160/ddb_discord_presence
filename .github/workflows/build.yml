@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2022 Jakub Wasylków <kuba_160@protonmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
 name: ddb_discord_presence plugin build
 
 on: [push,pull_request]

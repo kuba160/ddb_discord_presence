@@ -1,0 +1,19 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: ddb_discord_presence
+Upstream-Contact: Jakub Wasylków <kuba_160@protonmail.com>
+Source: https://github.com/kuba160/ddb_discord_presence
+
+
+Files: artwork/escape.c
+Copyright: 1998-2010 Daniel Stenberg <daniel@haxx.se>, et al.
+License: curl
+
+Files: artwork/artwork_internal.?
+       artwork/lastfm.?
+       artwork/escape.h
+Copyright: 2009-2021 Alexey Yakovenko and other contributors
+License: Zlib
+
+Files: discord-rpc/*
+Copyright: 2017 Discord, Inc. and other contributors
+License: LicenseRef-MIT-Discord

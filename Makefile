@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2022 Jakub Wasylków <kuba_160@protonmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
 # Makefile for discord_presence plugin
 ifeq ($(OS),Windows_NT)
     SUFFIX ?= dll
