@@ -3,17 +3,19 @@
 //
 // SPDX-License-Identifier: Zlib
 
+#include "artwork/lastfm.h"
+#include "discord_rpc.h"
 #include <deadbeef/deadbeef.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include "discord_rpc.h"
-#include "artwork/lastfm.h"
+#include <string.h>
 
 DB_misc_t plugin;
 //#define trace(...) { deadbeef->log ( __VA_ARGS__); }
-#define trace(...) { deadbeef->log_detailed (&plugin.plugin, 0, __VA_ARGS__); }
-#define trace_err(...) { deadbeef->log ( __VA_ARGS__); }
+#define trace(...) \
+    { deadbeef->log_detailed(&plugin.plugin, 0, __VA_ARGS__); }
+#define trace_err(...) \
+    { deadbeef->log(__VA_ARGS__); }
 
 #define APPLICATION_ID "424928021309554698"
 #define MAX_LEN 256
@@ -23,7 +25,8 @@ char discord_enabled = 0;
 int playback_resume = 0;
 int playback_resume_status = 0;
 
-static void discordInit() {
+static void
+discordInit () {
     DiscordEventHandlers handlers;
     memset(&handlers, 0, sizeof(handlers));
     // handlers are not used in our case
@@ -36,7 +39,8 @@ static void discordInit() {
     Discord_Initialize(APPLICATION_ID, &handlers, 1, NULL);
 }
 
-static char * nowplaying_format_string (char * script) {
+static char *
+nowplaying_format_string (char *script) {
     DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
     if (!nowplaying) {
         return NULL;
@@ -55,7 +59,7 @@ static char * nowplaying_format_string (char * script) {
     if (out && code_script) {
         *out = 0;
         deadbeef->tf_eval(&context, code_script, out, MAX_LEN);
-        trace ("nowplaying_format_string: \"%s\"\n", out);
+        trace("nowplaying_format_string: \"%s\"\n", out);
     }
     deadbeef->pl_item_unref(nowplaying);
     if (nowplaying_plt) {
@@ -67,11 +71,12 @@ static char * nowplaying_format_string (char * script) {
     return out;
 }
 
-static float nowplaying_length (){
-    DB_playItem_t * nowplaying = deadbeef->streamer_get_playing_track ();
+static float
+nowplaying_length () {
+    DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
     if (nowplaying) {
-        float item_length = deadbeef->pl_get_item_duration (nowplaying);
-        deadbeef->pl_item_unref (nowplaying);
+        float item_length = deadbeef->pl_get_item_duration(nowplaying);
+        deadbeef->pl_item_unref(nowplaying);
         return item_length;
     }
     return 0.0;
@@ -81,18 +86,19 @@ static float nowplaying_length (){
 #define STATUS_SONGCHANGED 2
 #define STATUS_SEEKED 3
 
-static void updateDiscordPresence(int playback_status, float song_len) {
-    trace ("updateDiscordPresence\n");
+static void
+updateDiscordPresence (int playback_status, float song_len) {
+    trace("updateDiscordPresence\n");
     // Arguments:
     //     playback_status: as above
     //     song_len: set only if playback_status=STATUS_SONGCHANGED
 
     // HACK, fix for playback resumption on start
-    if(playback_resume && (playback_status == STATUS_SONGCHANGED || playback_status == STATUS_SEEKED)) {
+    if (playback_resume && (playback_status == STATUS_SONGCHANGED || playback_status == STATUS_SEEKED)) {
         playback_resume--;
         if (playback_resume_status) {
             playback_status = STATUS_PAUSED;
-            if (deadbeef->conf_get_int ("discord_presence.hide_on_pause", 1)) {
+            if (deadbeef->conf_get_int("discord_presence.hide_on_pause", 1)) {
                 Discord_ClearPresence();
                 return;
             }
@@ -105,38 +111,38 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     }
 
     DiscordRichPresence discordPresence;
-    memset (&discordPresence, 0, sizeof(discordPresence));
+    memset(&discordPresence, 0, sizeof(discordPresence));
 
     char script[MAX_LEN];
-    
+
     // title_text
-    char * title_text;
-    deadbeef->conf_get_str ("discord_presence.title_script", "%title%$if(%ispaused%,' ('paused')')", script, MAX_LEN);
-    title_text = nowplaying_format_string (script);
+    char *title_text;
+    deadbeef->conf_get_str("discord_presence.title_script", "%title%$if(%ispaused%,' ('paused')')", script, MAX_LEN);
+    title_text = nowplaying_format_string(script);
     discordPresence.details = title_text;
-    
+
     // state_text
-    char * state_text;
-    if (deadbeef->conf_get_int ("discord_presence.playlist_on_state", 0)) {
-        state_text = malloc (MAX_LEN);
+    char *state_text;
+    if (deadbeef->conf_get_int("discord_presence.playlist_on_state", 0)) {
+        state_text = malloc(MAX_LEN);
         if (state_text) {
-            ddb_playlist_t * nowplaying_plt = deadbeef->plt_get_for_idx (deadbeef->streamer_get_current_playlist());
+            ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_for_idx(deadbeef->streamer_get_current_playlist());
             if (nowplaying_plt) {
-                deadbeef->plt_get_title (nowplaying_plt, state_text, MAX_LEN);
-                deadbeef->plt_unref (nowplaying_plt);
+                deadbeef->plt_get_title(nowplaying_plt, state_text, MAX_LEN);
+                deadbeef->plt_unref(nowplaying_plt);
             }
         }
     }
     else {
-        deadbeef->conf_get_str ("discord_presence.state_script", "%artist%", script, MAX_LEN);
-        state_text = nowplaying_format_string (script);
+        deadbeef->conf_get_str("discord_presence.state_script", "%artist%", script, MAX_LEN);
+        state_text = nowplaying_format_string(script);
     }
     discordPresence.state = state_text;
 
     // icon_text
-    char * icon_text;
-    deadbeef->conf_get_str ("discord_presence.icon_script", "%artist% \'/\' %album%", script, MAX_LEN);
-    icon_text = nowplaying_format_string (script);
+    char *icon_text;
+    deadbeef->conf_get_str("discord_presence.icon_script", "%artist% \'/\' %album%", script, MAX_LEN);
+    icon_text = nowplaying_format_string(script);
     discordPresence.largeImageText = icon_text;
 
     // tracknum
@@ -173,7 +179,7 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     }
     discordPresence.partySize = nowplaying_num;
     discordPresence.partyMax = nowplaying_all;
-    
+
     // time played
     discordPresence.startTimestamp = 0;
     discordPresence.endTimestamp = 0;
@@ -181,16 +187,16 @@ static void updateDiscordPresence(int playback_status, float song_len) {
         // startTimestamp
         discordPresence.startTimestamp = time(0);
         if (playback_status != STATUS_SONGCHANGED) {
-            discordPresence.startTimestamp -= (int) (nowplaying_length() * deadbeef->playback_get_pos() / 100);
+            discordPresence.startTimestamp -= (int)(nowplaying_length() * deadbeef->playback_get_pos() / 100);
         }
 
         // endTimestamp (calculate if needed)
-        if (deadbeef->conf_get_int ("discord_presence.end_timestamp", 0)) {
+        if (deadbeef->conf_get_int("discord_presence.end_timestamp", 0)) {
             discordPresence.instance = 1;
             if (playback_status == STATUS_SONGCHANGED)
-                discordPresence.endTimestamp = discordPresence.startTimestamp + (int) song_len;
+                discordPresence.endTimestamp = discordPresence.startTimestamp + (int)song_len;
             else
-                discordPresence.endTimestamp = discordPresence.startTimestamp + (int) nowplaying_length();
+                discordPresence.endTimestamp = discordPresence.startTimestamp + (int)nowplaying_length();
         }
     }
 
@@ -198,14 +204,15 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     discordPresence.largeImageKey = "default";
     discordPresence.smallImageKey = 0;
 
-    static const char* artist_keys[4] = { "artist", "album artist", "composer", "performer" };
-#   define ARTIST_KEY_COUNT (sizeof(artist_keys) / sizeof(artist_keys[0]))
-    
+    static const char *artist_keys[4] = {"artist", "album artist", "composer", "performer"};
+#define ARTIST_KEY_COUNT (sizeof(artist_keys) / sizeof(artist_keys[0]))
+
     char lastfm_link[MAX_LEN];
     if (deadbeef->conf_get_int("discord_presence.lastfm_cover", 1)) {
-        char lastfm_album[MAX_LEN]; *lastfm_album = 0;
+        char lastfm_album[MAX_LEN];
+        *lastfm_album = 0;
         deadbeef->pl_get_meta(nowplaying, "album", lastfm_album, MAX_LEN);
-        
+
         if (lastfm_album[0]) {
             char lastfm_artist[MAX_LEN];
             for (int i = 0; i < ARTIST_KEY_COUNT; ++i) {
@@ -234,11 +241,11 @@ static void updateDiscordPresence(int playback_status, float song_len) {
     Discord_UpdatePresence(&discordPresence);
 
     if (title_text)
-        free (title_text);
+        free(title_text);
     if (state_text)
-        free (state_text);
+        free(state_text);
     if (icon_text)
-        free (icon_text);
+        free(icon_text);
 
     deadbeef->pl_item_unref(nowplaying);
 }
@@ -247,7 +254,7 @@ static int
 discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
         case DB_EV_CONFIGCHANGED:
-            if (deadbeef->conf_get_int ("discord_presence.enable", 1)) {
+            if (deadbeef->conf_get_int("discord_presence.enable", 1)) {
                 if (!discord_enabled) {
                     discordInit();
                     discord_enabled = 1;
@@ -264,12 +271,12 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
         case DB_EV_SONGCHANGED:
             if (discord_enabled) {
                 // do not update if track changed to NULL
-                if(((ddb_event_trackchange_t *)ctx)->to != 0) {
+                if (((ddb_event_trackchange_t *)ctx)->to != 0) {
                     // DB_EV_SONGCHANGED is emited twice (bug? ignoring the first one)
                     // this has been fixed in commit d63a53bf70f09bc8534f6394580221c0af1babeb (2018-05-23)
                     //if ( ((ddb_event_trackchange_t *)ctx)->to != ((ddb_event_trackchange_t *)ctx)->from) {
-                        float nextitem_length = deadbeef->pl_get_item_duration (((ddb_event_trackchange_t *)ctx)->to);
-                        updateDiscordPresence(STATUS_SONGCHANGED, nextitem_length);
+                    float nextitem_length = deadbeef->pl_get_item_duration(((ddb_event_trackchange_t *)ctx)->to);
+                    updateDiscordPresence(STATUS_SONGCHANGED, nextitem_length);
                     //}
                 }
                 else {
@@ -285,11 +292,11 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
             break;
         case DB_EV_PAUSED:
             if (discord_enabled) {
-                if (p1 && deadbeef->conf_get_int ("discord_presence.hide_on_pause", 1)) {
+                if (p1 && deadbeef->conf_get_int("discord_presence.hide_on_pause", 1)) {
                     Discord_ClearPresence();
                 }
                 else {
-                    updateDiscordPresence (p1, 0);
+                    updateDiscordPresence(p1, 0);
                 }
             }
             break;
@@ -304,18 +311,18 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
 
 static int
 discord_presence_start () {
-    int enable = deadbeef->conf_get_int ("discord_presence.enable", 1);
+    int enable = deadbeef->conf_get_int("discord_presence.enable", 1);
     if (enable) {
         discordInit();
         discord_enabled = 1;
     }
     // HACK, determine if resuming track
     {
-        int resume = deadbeef->conf_get_int ("resume_last_session", 1);
-        int plt = deadbeef->conf_get_int ("resume.playlist", -1);
-        int track = deadbeef->conf_get_int ("resume.track", -1);
-        float pos = deadbeef->conf_get_float ("resume.position", -1);
-        int paused = deadbeef->conf_get_int ("resume.paused", 0);
+        int resume = deadbeef->conf_get_int("resume_last_session", 1);
+        int plt = deadbeef->conf_get_int("resume.playlist", -1);
+        int track = deadbeef->conf_get_int("resume.track", -1);
+        float pos = deadbeef->conf_get_float("resume.position", -1);
+        int paused = deadbeef->conf_get_int("resume.paused", 0);
         if (resume && plt >= 0 && track >= 0 && pos >= 0) {
             playback_resume = 3;
             playback_resume_status = paused;
@@ -353,7 +360,7 @@ DB_misc_t plugin = {
     .plugin.version_major = 1,
     .plugin.version_minor = 5,
     .plugin.id = "discord_presence",
-    .plugin.name ="Discord Rich Presence Plugin",
+    .plugin.name = "Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
                     "It connects with Discord through Discord Rich Presence API, no further authentication is needed.\n"
                     "You can configure displayed information through plugin settings.\n"
@@ -384,7 +391,7 @@ DB_misc_t plugin = {
     .plugin.message = discord_presence_message,
     .plugin.start = discord_presence_start,
     .plugin.stop = discord_presence_stop,
-    .plugin.configdialog = settings_dlg
+    .plugin.configdialog = settings_dlg,
 };
 
 DB_plugin_t *
