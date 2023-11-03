@@ -86,8 +86,11 @@ nowplaying_length () {
 #define STATUS_SONGCHANGED 2
 #define STATUS_SEEKED 3
 
+int playback_status;
+float song_len;
+
 static void
-updateDiscordPresence (int playback_status, float song_len) {
+updateDiscordPresence (void *_) {
     trace("updateDiscordPresence\n");
     // Arguments:
     //     playback_status: as above
@@ -250,6 +253,13 @@ updateDiscordPresence (int playback_status, float song_len) {
     deadbeef->pl_item_unref(nowplaying);
 }
 
+void
+create_update_thread (int ps, float slen) {
+    playback_status = ps;
+    song_len = slen;
+    deadbeef->thread_start(updateDiscordPresence, NULL);
+}
+
 static int
 discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) {
     switch (id) {
@@ -276,7 +286,7 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
                     // this has been fixed in commit d63a53bf70f09bc8534f6394580221c0af1babeb (2018-05-23)
                     //if ( ((ddb_event_trackchange_t *)ctx)->to != ((ddb_event_trackchange_t *)ctx)->from) {
                     float nextitem_length = deadbeef->pl_get_item_duration(((ddb_event_trackchange_t *)ctx)->to);
-                    updateDiscordPresence(STATUS_SONGCHANGED, nextitem_length);
+                    create_update_thread(STATUS_SONGCHANGED, nextitem_length);
                     //}
                 }
                 else {
@@ -287,7 +297,7 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
             break;
         case DB_EV_SEEKED:
             if (discord_enabled) {
-                updateDiscordPresence(STATUS_SEEKED, 0);
+                create_update_thread(STATUS_SEEKED, 0);
             }
             break;
         case DB_EV_PAUSED:
@@ -296,7 +306,7 @@ discord_presence_message (uint32_t id, uintptr_t ctx, uint32_t p1, uint32_t p2) 
                     Discord_ClearPresence();
                 }
                 else {
-                    updateDiscordPresence(p1, 0);
+                    create_update_thread(p1, 0);
                 }
             }
             break;
