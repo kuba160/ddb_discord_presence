@@ -1,5 +1,5 @@
 // Copyright (C) 2018-2022 Jakub Wasylków <kuba_160@protonmail.com>
-// SPDX-FileCopyrightText: 2018-2022 Jakub Wasylków <kuba_160@protonmail.com>
+// SPDX-FileCopyrightText: 2018-2023 Jakub Wasylków <kuba_160@protonmail.com>
 //
 // SPDX-License-Identifier: Zlib
 
@@ -383,7 +383,7 @@ DB_misc_t plugin = {
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 1,
-    .plugin.version_minor = 5,
+    .plugin.version_minor = 6,
     .plugin.id = "discord_presence",
     .plugin.name = "Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
@@ -393,7 +393,7 @@ DB_misc_t plugin = {
                     "https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0",
     .plugin.copyright =
         "Discord Rich Presence Plugin for DeaDBeeF\n"
-        "Copyright (C) 2018-2021 Jakub Wasylków <kuba_160@protonmail.com>\n"
+        "Copyright (C) 2018-2023 Jakub Wasylków <kuba_160@protonmail.com>\n"
         "\n"
         "This software is provided 'as-is', without any express or implied\n"
         "warranty.  In no event will the authors be held liable for any damages\n"
