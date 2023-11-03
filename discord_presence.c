@@ -183,6 +183,21 @@ updateDiscordPresence (void *_) {
     discordPresence.partySize = nowplaying_num;
     discordPresence.partyMax = nowplaying_all;
 
+    // HACK: disable timestamp if seeked but paused
+    if (playback_status == STATUS_SEEKED) {
+        if (deadbeef->get_output() &&
+            deadbeef->get_output()->state() != DDB_PLAYBACK_STATE_PLAYING) {
+            playback_status = STATUS_PAUSED;
+            if (deadbeef->conf_get_int("discord_presence.hide_on_pause", 1)) {
+                Discord_ClearPresence();
+                free(title_text);
+                free(state_text);
+                free(icon_text);
+                return;
+            }
+        }
+    }
+
     // time played
     discordPresence.startTimestamp = 0;
     discordPresence.endTimestamp = 0;
