@@ -96,4 +96,30 @@ jobs:
       with:
         name: macos-debug-${{ steps.vars.outputs.sha_short }}
         path: ./binary_debug
-
+  build_macos_arm:
+    name: macOS arm64
+    runs-on: macos-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v1
+    - name: Get sha_short
+      id: vars
+      run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
+    - name: Download DeaDBeeF header
+      run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+    - name: Build ddb_discord_presence
+      run: CFLAGS="-target arm64-apple-macos11" CXXFLAGS="-target arm64-apple-macos11" make && mkdir binary && make install PREFIX=./binary
+    - name: Build ddb_discord_presence with debugging symbols
+      run: make clean &&  CFLAGS="-target arm64-apple-macos11" CXXFLAGS="-target arm64-apple-macos11" make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
+    - name: Upload artifact macos-arm64-${{ steps.vars.outputs.sha_short }}.zip
+      uses: actions/upload-artifact@v1
+      if: ${{ !env.ACT }}
+      with:
+        name: macos-arm64-${{ steps.vars.outputs.sha_short }}
+        path: ./binary
+    - name: Upload artifact macos-arm64-debug-${{ steps.vars.outputs.sha_short }}.zip
+      if: ${{ !env.ACT }}
+      uses: actions/upload-artifact@v1
+      with:
+        name: macos-arm64-debug-${{ steps.vars.outputs.sha_short }}
+        path: ./binary_debug
