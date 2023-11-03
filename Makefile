@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2022 Jakub Wasylków <kuba_160@protonmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
 # Makefile for discord_presence plugin
 ifeq ($(OS),Windows_NT)
     SUFFIX ?= dll
@@ -14,8 +17,8 @@ endif
 CC?=gcc
 CXX?=g++
 STD?=gnu99
-CFLAGS+=-fPIC -I /usr/local/include -I discord-rpc/include -I . -Wall
-CXXFLAGS+=-fPIC -I /usr/local/include -I . -Wall
+CFLAGS+=$(COPT) -fPIC -I /usr/local/include -I discord-rpc/include -I . -Wall
+CXXFLAGS+=$(CXXOPT) -fPIC -I /usr/local/include -I . -Wall
 ifeq ($(UNAME_S),Darwin)
     CFLAGS+=-I $(DEADBEEF_OSX)/Contents/Headers
     CXXFLAGS+=-I $(DEADBEEF_OSX)/Contents/Headers

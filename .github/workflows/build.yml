@@ -1,6 +1,9 @@
+# SPDX-FileCopyrightText: 2022 Jakub Wasylków <kuba_160@protonmail.com>
+# SPDX-License-Identifier: CC0-1.0
+
 name: ddb_discord_presence plugin build
 
-on: [push]
+on: [push,pull_request]
 
 jobs:
   build_linux:
@@ -21,10 +24,12 @@ jobs:
       run: make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
     - name: Upload artifact linux-${{ steps.vars.outputs.sha_short }}.zip
       uses: actions/upload-artifact@v1
+      if: ${{ !env.ACT }}
       with:
         name: linux-${{ steps.vars.outputs.sha_short }}
         path: ./binary
     - name: Upload artifact linux-debug-${{ steps.vars.outputs.sha_short }}.zip
+      if: ${{ !env.ACT }}
       uses: actions/upload-artifact@v1
       with:
         name: linux-debug-${{ steps.vars.outputs.sha_short }}

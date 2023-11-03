@@ -1,3 +1,8 @@
+<!--
+SPDX-FileCopyrightText: 2022 Jakub Wasylków <kuba_160@protonmail.com>
+SPDX-License-Identifier: CC0-1.0
+-->
+
 # Discord RP plugin for DeaDBeeF 
 Discord Rich Presence Plugin shows your current playing track on your Discord status.
 
@@ -32,5 +37,6 @@ It will build`libdiscord-rpc` library and then move static library file (`libdis
 
 To compile without building `libdiscord-rpc` run `make discord_presence`.
 
+## License
 
-
+This work is licensed under multiple licences. Plugin itself and artwork code (with exception of escape.c) is licensed under Zlib. artwork/escape.c is licensed under curl license. discord-rpc is itself licensed under MIT.
