@@ -49,7 +49,7 @@ jobs:
        with:
           update: true
           install: >-
-            mingw-w64-x86_64-gcc wget make git tar
+            mingw-w64-x86_64-gcc wget make git patch tar
      - name: Download DeaDBeeF header
        shell: msys2 {0}
        run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
