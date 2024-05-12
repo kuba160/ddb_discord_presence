@@ -1,9 +1,9 @@
 diff --git a/Makefile b/Makefile
 new file mode 100644
-index 0000000..0ba63bb
+index 0000000..1c18938
 --- /dev/null
 +++ b/Makefile
-@@ -0,0 +1,30 @@
+@@ -0,0 +1,32 @@
 +CC?=gcc
 +CXX?=g++
 +SRC_DIR := ./src
@@ -35,3 +35,4 @@ index 0000000..0ba63bb
 +	wget -N -P thirdparty/ https://github.com/miloyip/rapidjson/archive/v1.1.0.tar.gz
 +	tar xzf thirdparty/v1.1.0.tar.gz -C thirdparty/
 +	rm thirdparty/v1.1.0.tar.gz
++	cd thirdparty/rapidjson-1.1.0/ && patch -p1 -i ../../../01-rapidjson.patch
