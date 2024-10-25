@@ -57,12 +57,22 @@ discord-rpc-patch:
 	if [ $$? -eq 0 ]; then \
 	git apply ../00-discord-rpc.patch;\
 	fi
+	@cd discord-rpc; \
+	git apply ../02-activity_type.patch --check 2>/dev/null >/dev/null; \
+	if [ $$? -eq 0 ]; then \
+	git apply ../02-activity_type.patch;\
+	fi
 
 discord-rpc-patch-reverse:
 	@cd discord-rpc; \
 	git apply ../00-discord-rpc.patch --check --reverse 2>/dev/null >/dev/null; \
 	if [ $$? -eq 0 ]; then \
 	git apply --reverse ../00-discord-rpc.patch;\
+	fi
+	@cd discord-rpc; \
+	git apply ../02-activity_type.patch --check --reverse 2>/dev/null >/dev/null; \
+	if [ $$? -eq 0 ]; then \
+	git apply --reverse ../02-activity_type.patch;\
 	fi
 
 install:

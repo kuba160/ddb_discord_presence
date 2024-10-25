@@ -1,0 +1,44 @@
+diff --git a/include/discord_rpc.h b/include/discord_rpc.h
+index 9470434..f14033f 100644
+--- a/include/discord_rpc.h
++++ b/include/discord_rpc.h
+@@ -23,6 +23,14 @@
+ extern "C" {
+ #endif
+ 
++enum {
++    DISCORD_ACTIVITY_PLAYING = 0,
++    DISCORD_ACTIVITY_STREAMING = 1,
++    DISCORD_ACTIVITY_LISTENING = 2,
++    DISCORD_ACTIVITY_WATCHING = 3,
++    DISCORD_ACTIVITY_COMPETING = 5,
++};
++
+ typedef struct DiscordRichPresence {
+     const char* state;   /* max 128 bytes */
+     const char* details; /* max 128 bytes */
+@@ -40,6 +48,7 @@ typedef struct DiscordRichPresence {
+     const char* joinSecret;     /* max 128 bytes */
+     const char* spectateSecret; /* max 128 bytes */
+     int8_t instance;
++    int8_t activityType;
+ } DiscordRichPresence;
+ 
+ typedef struct DiscordUser {
+diff --git a/src/serialization.cpp b/src/serialization.cpp
+index 70efa63..6618556 100644
+--- a/src/serialization.cpp
++++ b/src/serialization.cpp
+@@ -122,6 +122,12 @@ size_t JsonWriteRichPresenceObj(char* dest,
+                     }
+                 }
+ 
++                if (presence->activityType >= DISCORD_ACTIVITY_PLAYING &&
++                    presence->activityType <= DISCORD_ACTIVITY_COMPETING) {
++                    writer.Key("type");
++                    writer.Int(presence->activityType);
++                }
++
+                 if ((presence->largeImageKey && presence->largeImageKey[0]) ||
+                     (presence->largeImageText && presence->largeImageText[0]) ||
+                     (presence->smallImageKey && presence->smallImageKey[0]) ||
