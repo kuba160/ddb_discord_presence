@@ -93,13 +93,13 @@ jobs:
     - name: Build discord_presence (x86_64)
       run: make clean && make && make install PREFIX=./binary && mv ./binary/discord_presence.dylib ./binary/discord_presence_x86_64.dylib
     - name: Combine both archs
-      run: lipo -create -output ./binary/discord_presence.dylib ./binary/discord_presence_arm64.dylib ./binary/discord_presence_x86_64.dylib
+      run: lipo --help && lipo -create -output ./binary/discord_presence.dylib ./binary/discord_presence_arm64.dylib ./binary/discord_presence_x86_64.dylib
     - name: Build discord_presence with debugging symbols (arm64)
       run: make clean && CFLAGS="-target arm64-apple-macos11" CXXFLAGS="-target arm64-apple-macos11" make && make install PREFIX=./binary_debug && mv ./binary_debug/discord_presence.dylib ./binary_debug/discord_presence_arm64.dylib
     - name: Build discord_presence with debugging symbols (x86_64)
       run: make clean && make DEBUG=1 && make install PREFIX=./binary_debug && mv ./binary_debug/discord_presence.dylib ./binary_debug/discord_presence_x86_64.dylib
     - name: Combine both archs (debugging)
-      run: lipo -create -output ./binary_debug/discord_presence.dylib ./binary_debug/discord_presence_arm64.dylib ./binary_debug/discord_presence_x86_64.dylib
+      run: lipo --help && lipo -create -output ./binary_debug/discord_presence.dylib ./binary_debug/discord_presence_arm64.dylib ./binary_debug/discord_presence_x86_64.dylib
     - name: Upload artifact macos-${{ steps.vars.outputs.sha_short }}.zip
       uses: actions/upload-artifact@v3
       if: ${{ !env.ACT }}
