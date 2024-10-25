@@ -126,62 +126,15 @@ updateDiscordPresence (void *_) {
 
     // state_text
     char *state_text;
-    if (deadbeef->conf_get_int("discord_presence.playlist_on_state", 0)) {
-        state_text = malloc(MAX_LEN);
-        if (state_text) {
-            ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_for_idx(deadbeef->streamer_get_current_playlist());
-            if (nowplaying_plt) {
-                deadbeef->plt_get_title(nowplaying_plt, state_text, MAX_LEN);
-                deadbeef->plt_unref(nowplaying_plt);
-            }
-        }
-    }
-    else {
-        deadbeef->conf_get_str("discord_presence.state_script", "%artist%", script, MAX_LEN);
-        state_text = nowplaying_format_string(script);
-    }
-    discordPresence.state = state_text;
+    deadbeef->conf_get_str("discord_presence.state_script", "%artist%", script, MAX_LEN);
+    state_text = nowplaying_format_string(script);
+    discordPresence.state = nowplaying_format_string(script);
 
     // icon_text
     char *icon_text;
-    deadbeef->conf_get_str("discord_presence.icon_script", "%artist% \'/\' %album%", script, MAX_LEN);
+    deadbeef->conf_get_str("discord_presence.icon_script", "%album%", script, MAX_LEN);
     icon_text = nowplaying_format_string(script);
     discordPresence.largeImageText = icon_text;
-
-    // tracknum
-    int nowplaying_num = 0;
-    int nowplaying_all = 0;
-    if ((nowplaying_num = deadbeef->conf_get_int("discord_presence.show_tracknum", 1))) {
-        // using nowplaying num as type selection
-        while (1) {
-            if (nowplaying_num == 3 || nowplaying_num == 2) {
-                // Set index in album
-                DB_metaInfo_t *track = deadbeef->pl_meta_for_key(nowplaying, "track");
-                DB_metaInfo_t *totaltracks = deadbeef->pl_meta_for_key(nowplaying, "numtracks");
-
-                if (track && totaltracks) {
-                    // assuming value is not NULL
-                    nowplaying_num = atoi(track->value);
-                    nowplaying_all = atoi(totaltracks->value);
-                    break;
-                }
-                if (nowplaying_num == 2) {
-                    break;
-                }
-                /* fall through on type=3 */
-            }
-            // Set index in playlist
-            nowplaying_num = deadbeef->pl_get_idx_of(nowplaying) + 1;
-            ddb_playlist_t *nowplaying_plt = deadbeef->plt_get_for_idx(deadbeef->streamer_get_current_playlist());
-            if (nowplaying_plt) {
-                nowplaying_all = deadbeef->plt_get_item_count(nowplaying_plt, PL_MAIN);
-                deadbeef->plt_unref(nowplaying_plt);
-            }
-            break;
-        }
-    }
-    discordPresence.partySize = nowplaying_num;
-    discordPresence.partyMax = nowplaying_all;
 
     // HACK: disable timestamp if seeked but paused
     if (playback_status == STATUS_SEEKED) {
@@ -201,7 +154,7 @@ updateDiscordPresence (void *_) {
     // time played
     discordPresence.startTimestamp = 0;
     discordPresence.endTimestamp = 0;
-    if (playback_status != STATUS_PAUSED && deadbeef->conf_get_int("discord_presence.end_timestamp", 0) != 2) {
+    if (playback_status != STATUS_PAUSED && deadbeef->conf_get_int("discord_presence.end_timestamp2", 1) != 2) {
         // startTimestamp
         discordPresence.startTimestamp = time(0);
         if (playback_status != STATUS_SONGCHANGED) {
@@ -209,7 +162,7 @@ updateDiscordPresence (void *_) {
         }
 
         // endTimestamp (calculate if needed)
-        if (deadbeef->conf_get_int("discord_presence.end_timestamp", 0)) {
+        if (deadbeef->conf_get_int("discord_presence.end_timestamp2", 1)) {
             discordPresence.instance = 1;
             if (playback_status == STATUS_SONGCHANGED)
                 discordPresence.endTimestamp = discordPresence.startTimestamp + (int)song_len;
@@ -217,9 +170,11 @@ updateDiscordPresence (void *_) {
                 discordPresence.endTimestamp = discordPresence.startTimestamp + (int)nowplaying_length();
         }
     }
+    discordPresence.startTimestamp *= 1000;
+    discordPresence.endTimestamp *= 1000;
 
     // misc
-    discordPresence.largeImageKey = "default";
+    discordPresence.largeImageKey = deadbeef->conf_get_int("discord_presence.default_icon", 1) ? "deadbeef" : "default";
     discordPresence.smallImageKey = 0;
 
     static const char *artist_keys[4] = {"artist", "album artist", "composer", "performer"};
@@ -255,6 +210,7 @@ updateDiscordPresence (void *_) {
     //discordPresence.matchSecret = 0;
     //discordPresence.joinSecret = 0;
     //discordPresence.spectateSecret = 0;
+    discordPresence.activityType = DISCORD_ACTIVITY_LISTENING;
 
     Discord_UpdatePresence(&discordPresence);
 
@@ -370,20 +326,19 @@ static const char settings_dlg[] =
     "property \"Enable\" checkbox discord_presence.enable 1;\n"
     "property \"Title format\" entry discord_presence.title_script \"%title%$if(%ispaused%,' ('paused')')\";\n"
     "property \"State format\" entry discord_presence.state_script \"%artist%\";\n"
-    "property \"Overwrite state format with playlist name\" checkbox discord_presence.playlist_on_state 0;\n"
-    "property \"Range display '(n of m)'\" select[4] discord_presence.show_tracknum 1 \"Hidden\" \"Track index in playlist\" \"Track index in album\" \"Track index in album/playlist (fallback)\";\n"
-    "property \"Display time\" select[3] discord_presence.end_timestamp 0 \"Elapsed time\" \"Remaining time\" \"Don't display time\";\n"
-    "property \"Icon text format\" entry discord_presence.icon_script \"%artist% \'/\' %album%\";\n"
+    "property \"Display time\" select[3] discord_presence.end_timestamp2 1 \"Only elapsed time\" \"Full track time\" \"Don't display time\";\n"
+    "property \"Icon text format\" entry discord_presence.icon_script \"%album%\";\n"
     "property \"Show paused icon\" checkbox discord_presence.paused_icon 1;\n"
     "property \"Hide presence on pause\" checkbox discord_presence.hide_on_pause 1;\n"
-    "property \"Display cover from last.fm\" checkbox discord_presence.lastfm_cover 1;\n";
+    "property \"Display cover from last.fm\" checkbox discord_presence.lastfm_cover 1;\n"
+    "property \"Use default deadbeef icon\" checkbox discord_presence.default_icon 1;\n";
 
 DB_misc_t plugin = {
     .plugin.api_vmajor = 1,
     .plugin.api_vminor = 10,
     .plugin.type = DB_PLUGIN_MISC,
     .plugin.version_major = 1,
-    .plugin.version_minor = 6,
+    .plugin.version_minor = 7,
     .plugin.id = "discord_presence",
     .plugin.name = "Discord Rich Presence Plugin",
     .plugin.descr = "Discord Rich Presence Plugin shows your current playing track on your Discord status.\n"
