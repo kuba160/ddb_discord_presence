@@ -3,4 +3,4 @@
 
 [submodule "discord-rpc"]
 	path = discord-rpc
-	url = https://github.com/discordapp/discord-rpc.git
+	url = https://github.com/kuba160/discord-rpc.git
