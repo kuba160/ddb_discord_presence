@@ -23,14 +23,14 @@ jobs:
     - name: Build ddb_discord_presence with debugging symbols
       run: make clean && make DEBUG=1 && mkdir binary_debug && make install PREFIX=./binary_debug
     - name: Upload artifact linux-${{ steps.vars.outputs.sha_short }}.zip
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       if: ${{ !env.ACT }}
       with:
         name: linux-${{ steps.vars.outputs.sha_short }}
         path: ./binary
     - name: Upload artifact linux-debug-${{ steps.vars.outputs.sha_short }}.zip
       if: ${{ !env.ACT }}
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v3
       with:
         name: linux-debug-${{ steps.vars.outputs.sha_short }}
         path: ./binary_debug
@@ -60,12 +60,12 @@ jobs:
        shell: msys2 {0}
        run: make clean && make DEBUG=1 CC=gcc && mkdir binary_debug && make install PREFIX=./binary_debug
      - name: Upload artifact windows-${{ steps.vars.outputs.sha_short }}.zip
-       uses: actions/upload-artifact@v1
+       uses: actions/upload-artifact@v3
        with:
          name: windows-${{ steps.vars.outputs.sha_short }}
          path: ./binary
      - name: Upload artifact windows-debug-${{ steps.vars.outputs.sha_short }}.zip
-       uses: actions/upload-artifact@v1
+       uses: actions/upload-artifact@v3
        with:
          name: windows-debug-${{ steps.vars.outputs.sha_short }}
          path: ./binary_debug
