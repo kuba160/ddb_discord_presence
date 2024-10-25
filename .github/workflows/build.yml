@@ -18,6 +18,8 @@ jobs:
       run: echo "::set-output name=sha_short::$(git rev-parse --short HEAD)"
     - name: Download DeaDBeeF header
       run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+    - name: Update submodules
+      run: git submodule update --init
     - name: Build ddb_discord_presence
       run: make && mkdir binary && make install PREFIX=./binary
     - name: Build ddb_discord_presence with debugging symbols
@@ -53,6 +55,9 @@ jobs:
      - name: Download DeaDBeeF header
        shell: msys2 {0}
        run: wget https://raw.githubusercontent.com/DeaDBeeF-Player/deadbeef/1.8/deadbeef.h && mkdir deadbeef && mv deadbeef.h deadbeef/
+     - name: Update submodules
+       shell: msys2 {0}
+       run: git submodule update --init
      - name: Build ddb_discord_presence
        shell: msys2 {0}
        run: make && mkdir binary && make install PREFIX=./binary
