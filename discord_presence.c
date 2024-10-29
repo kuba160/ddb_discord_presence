@@ -8,6 +8,7 @@
 #include <deadbeef/deadbeef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 
 DB_misc_t plugin;
@@ -80,6 +81,20 @@ nowplaying_length () {
         return item_length;
     }
     return 0.0;
+}
+
+static inline bool
+is_streaming () {
+    DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
+    if (nowplaying) {
+        deadbeef->pl_lock();
+        const char *fname = deadbeef->pl_find_meta (nowplaying, ":URI");
+        bool result = !deadbeef->is_local_file(fname);
+        deadbeef->pl_item_unref(nowplaying);
+        deadbeef->pl_unlock();
+        return result;
+    }
+    return false;
 }
 
 #define STATUS_PAUSED 1
@@ -162,7 +177,7 @@ updateDiscordPresence (void *_) {
         }
 
         // endTimestamp (calculate if needed)
-        if (deadbeef->conf_get_int("discord_presence.end_timestamp2", 1)) {
+        if (deadbeef->conf_get_int("discord_presence.end_timestamp2", 1) && !is_streaming()) {
             discordPresence.instance = 1;
             if (playback_status == STATUS_SONGCHANGED)
                 discordPresence.endTimestamp = discordPresence.startTimestamp + (int)song_len;
