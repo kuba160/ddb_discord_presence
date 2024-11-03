@@ -6,9 +6,9 @@
 #include "artwork/lastfm.h"
 #include "discord_rpc.h"
 #include <deadbeef/deadbeef.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
 
 DB_misc_t plugin;
@@ -88,7 +88,7 @@ is_streaming () {
     DB_playItem_t *nowplaying = deadbeef->streamer_get_playing_track();
     if (nowplaying) {
         deadbeef->pl_lock();
-        const char *fname = deadbeef->pl_find_meta (nowplaying, ":URI");
+        const char *fname = deadbeef->pl_find_meta(nowplaying, ":URI");
         bool result = !deadbeef->is_local_file(fname);
         deadbeef->pl_item_unref(nowplaying);
         deadbeef->pl_unlock();
