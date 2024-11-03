@@ -38,7 +38,7 @@ ARTWORK_OBJS=artwork/artwork_internal.o artwork/escape.o artwork/lastfm.o
 
 all: libdiscord-rpc.a discord_presence
 
-discord_presence:
+discord_presence: libdiscord-rpc.a
 	$(MAKE) -C artwork
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
 	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
@@ -52,4 +52,4 @@ install:
 
 clean:
 	cd discord-rpc && git clean -df && git reset --hard
-	rm -fv $(PLUGNAME).o $(PLUGNAME).$(SUFFIX)
+	rm -fv $(PLUGNAME).o $(PLUGNAME).$(SUFFIX) $(ARTWORK_OBJS) libdiscord-rpc.a
