@@ -39,12 +39,12 @@ ARTWORK_OBJS=artwork/artwork_internal.o artwork/escape.o artwork/lastfm.o
 all: libdiscord-rpc.a discord_presence
 
 discord_presence: libdiscord-rpc.a
-	$(MAKE) -C artwork
+	CFLAGS="$(CFLAGS)" $(MAKE) -C artwork
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
 	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
 
 libdiscord-rpc.a:
-	cd discord-rpc && $(MAKE)
+	cd discord-rpc && CFLAGS="$(CFLAGS)" $(MAKE)
 	cp discord-rpc/src/libdiscord-rpc.a .
 
 install:
