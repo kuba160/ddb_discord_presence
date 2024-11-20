@@ -36,38 +36,20 @@ PLUGNAME=discord_presence
 LIBS=libdiscord-rpc.a -lpthread
 ARTWORK_OBJS=artwork/artwork_internal.o artwork/escape.o artwork/lastfm.o
 
-all: submodules_load libdiscord-rpc.a discord_presence
+all: libdiscord-rpc.a discord_presence
 
-discord_presence:
-	$(MAKE) -C artwork
+discord_presence: libdiscord-rpc.a
+	CFLAGS="$(CFLAGS)" $(MAKE) -C artwork
 	$(CC) -std=$(STD) -c $(CFLAGS) -c $(PLUGNAME).c
 	$(CXX) -std=$(STD) -shared $(CXXFLAGS) -o $(PLUGNAME).$(SUFFIX) $(PLUGNAME).o $(ARTWORK_OBJS) $(LIBS) $(CXX_LDFLAGS) $(LDFLAGS)
 
-libdiscord-rpc.a: discord-rpc-patch
-	cd discord-rpc && $(MAKE)
+libdiscord-rpc.a:
+	cd discord-rpc && CFLAGS="$(CFLAGS)" $(MAKE)
 	cp discord-rpc/src/libdiscord-rpc.a .
-
-submodules_load:
-	git submodule init
-	git submodule update
-
-discord-rpc-patch:
-	@cd discord-rpc; \
-	git apply ../00-discord-rpc.patch --check 2>/dev/null >/dev/null; \
-	if [ $$? -eq 0 ]; then \
-	git apply ../00-discord-rpc.patch;\
-	fi
-
-discord-rpc-patch-reverse:
-	@cd discord-rpc; \
-	git apply ../00-discord-rpc.patch --check --reverse 2>/dev/null >/dev/null; \
-	if [ $$? -eq 0 ]; then \
-	git apply --reverse ../00-discord-rpc.patch;\
-	fi
 
 install:
 	cp $(PLUGNAME).$(SUFFIX) $(PREFIX)
 
-clean: discord-rpc-patch-reverse
+clean:
 	cd discord-rpc && git clean -df && git reset --hard
-	rm -fv $(PLUGNAME).o $(PLUGNAME).$(SUFFIX)
+	rm -fv $(PLUGNAME).o $(PLUGNAME).$(SUFFIX) $(ARTWORK_OBJS) libdiscord-rpc.a

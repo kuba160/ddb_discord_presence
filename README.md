@@ -6,23 +6,26 @@ SPDX-License-Identifier: CC0-1.0
 # Discord RP plugin for DeaDBeeF 
 Discord Rich Presence Plugin shows your current playing track on your Discord status.
 
-![image](https://user-images.githubusercontent.com/6359901/64494663-11f67980-d290-11e9-8b88-8c0f6d011dca.png)
+![image](https://github.com/user-attachments/assets/dc7128d3-3f34-4276-92d1-9b2a35f7c3ac)
+
 
 ## Download
 You can find my local builds on https://github.com/kuba160/ddb_discord_presence/releases
 
-Another alternative is to download it from http://deadbeef.sourceforge.net/plugins.html (0.7 branch)
+Another alternative is to download it from http://deadbeef.sourceforge.net/plugins.html (current stable release)
 
 ## Configuration
 Plugin connects with Discord through Discord Rich Presence API, no further authentication is needed.
 You can configure displayed information through plugin settings:
 
-![image](https://user-images.githubusercontent.com/6359901/37570322-c8a79236-2aee-11e8-875f-ba317ded6b25.png)
+![image](https://github.com/user-attachments/assets/05133568-8f06-41c3-a253-469839d50af4)
 
 For more information about title formatting please visit [https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0](https://github.com/DeaDBeeF-Player/deadbeef/wiki/Title-formatting-2.0)
 
 
 ## Compile
+Submodules are not updated automatically: run `git submodule update --init` first.
+
 To compile discord_presence plugin simply do `make` and `sudo make install`. For debug build, compile with `make DEBUG=1`.
 
 ## Troubleshooting
